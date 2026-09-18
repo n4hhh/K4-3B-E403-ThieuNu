@@ -99,8 +99,10 @@
 
 {% block scripts %}
 <script>
-    // Inject quiz data for JavaScript
-    window.__QUIZ_DATA__ = {{ quiz.model_dump_json() if quiz else '{}'|safe }};
+    // Inject quiz data for JavaScript.
+    // `| safe` must wrap the whole expression: autoescaping would turn the
+    // JSON's quotes into entities and break the assignment.
+    window.__QUIZ_DATA__ = {{ (quiz.model_dump_json() if quiz else '{}') | safe }};
 </script>
 <script src="{{ url_for('static', path='js/quiz.js') }}"></script>
 {% endblock %}

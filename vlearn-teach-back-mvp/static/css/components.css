@@ -105,7 +105,11 @@
     align-self: flex-start;
 }
 
-.msg.user {
+/* ``student`` is what the server sends (MessageAuthor.STUDENT); ``user``
+   is what the client-side appender used before the page reloads. Both
+   mean the same bubble, so every student rule below lists both. */
+.msg.user,
+.msg.student {
     align-self: flex-end;
     flex-direction: row-reverse;
 }
@@ -124,7 +128,8 @@
     box-shadow: 0 2px 8px rgba(255, 143, 171, 0.15);
 }
 
-.msg.user .avatar {
+.msg.user .avatar,
+.msg.student .avatar {
     background: linear-gradient(135deg, var(--vl-pink-200), var(--vl-pink-400));
     border-color: var(--vl-pink-500);
 }
@@ -146,7 +151,8 @@
     border-bottom-left-radius: 4px;
 }
 
-.msg.user .bubble {
+.msg.user .bubble,
+.msg.student .bubble {
     background: linear-gradient(135deg, var(--vl-pink-500), var(--vl-pink-600));
     color: #fff;
     border-color: var(--vl-pink-700);
@@ -157,7 +163,8 @@
     color: var(--vl-pink-700);
 }
 
-.msg.user .bubble strong {
+.msg.user .bubble strong,
+.msg.student .bubble strong {
     color: var(--vl-pink-100);
 }
 
@@ -182,6 +189,48 @@
 
 .gap-badge i {
     font-size: 0.9rem;
+}
+
+/* The badge labels the message below it, so it takes its own line
+   (inline-flex alone would let the reply text run on after it). */
+.msg .bubble .gap-badge,
+.msg .bubble .pass-badge {
+    display: flex;
+    width: fit-content;
+    margin-top: 0;
+    margin-bottom: 0.6rem;
+}
+
+/* ============== Pass Badge ============== */
+.pass-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: #e6fbd6;
+    color: #2e7a02;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--vl-green);
+}
+
+/* ============== Source Reference ============== */
+/* Citations point the student back at the lecture instead of handing
+   over the answer, so they are quiet by design. */
+.msg-citation {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--vl-ink-soft, #7a6a70);
+}
+
+.msg-quote {
+    display: block;
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--vl-pink-200);
+    color: var(--vl-ink-soft, #7a6a70);
+    font-style: italic;
 }
 
 /* ============== System Message ============== */

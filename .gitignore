@@ -4,4 +4,14 @@ __pycache__/
 node_modules/
 
 .venv/
-data/
+
+# The VLearn data pack lives at the repo root and must not be committed
+# (data-pack rules: transcripts and slides stay inside the course).
+# Anchored with a leading slash so the app's own data/ directory — which
+# holds the built-in demo lesson — is still tracked.
+/data/
+
+# Generated at runtime inside the app: derived criteria, quizzes, logs.
+vlearn-teach-back-mvp/data/cache/
+vlearn-teach-back-mvp/data/processed/
+vlearn-teach-back-mvp/data/session-logs/

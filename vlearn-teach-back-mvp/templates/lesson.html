@@ -58,9 +58,18 @@
                         <i class="bi bi-card-text text-primary me-2"></i>
                         Tóm tắt nội dung
                     </h2>
+                    {# A lecture transcript runs to ~100k characters. Show an
+                       excerpt: the full text is the agent's grounding source,
+                       not reading material for this page. #}
                     <div class="p-3 rounded" style="background: var(--vl-pink-50); border: 2px dashed var(--vl-pink-200);">
-                        <p class="mb-0">{{ selected.transcript }}</p>
+                        <p class="mb-0">{{ selected.transcript | truncate(900, true, '…') }}</p>
                     </div>
+                    {% if selected.source_file %}
+                        <p class="small text-muted mt-2 mb-0">
+                            <i class="bi bi-file-earmark-text me-1"></i>
+                            Nguồn: {{ selected.source_file }}
+                        </p>
+                    {% endif %}
                     {% endif %}
 
                     <!-- CTAs -->
@@ -113,7 +122,16 @@
                                 <div class="num">{{ loop.index }}</div>
                                 <div class="body">
                                     <strong>{{ chunk.title }}</strong>
-                                    <span>{{ chunk.key_points|length }} điểm chính</span>
+                                    {# Key points are derived on demand, so the
+                                       count is unknown until the chunk is
+                                       prepared. Show the state, not a zero. #}
+                                    <span>
+                                        {% if chunk.key_points %}
+                                            {{ chunk.key_points|length }} ý chính cần nêu
+                                        {% else %}
+                                            Sẵn sàng dạy lại
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
                         {% endfor %}

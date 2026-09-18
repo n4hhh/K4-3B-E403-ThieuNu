@@ -1,4 +1,11 @@
 // teaching.js — Teaching session interaction
+//
+// The server owns every decision: what the agent says, whether the chunk
+// passed, and which badge the bubble carries. This file only renders
+// what came back. In particular it must never display validation
+// internals such as `missing_points` — those name the very thing the
+// student is supposed to work out, so printing them would hand over the
+// answer that the agent just carefully avoided giving.
 
 (function () {
     "use strict";
@@ -10,290 +17,256 @@
     const messageInput = document.getElementById("message-input");
     const sendBtn = document.getElementById("send-btn");
     const nextChunkBtn = document.getElementById("next-chunk-btn");
-    const hintRow = document.getElementById("hint-row");
     const typingIndicator = document.getElementById("typing-indicator");
 
     const messageUrl = form.dataset.messageUrl;
     const nextUrl = form.dataset.nextUrl;
     const sessionId = form.dataset.sessionId;
 
-    // Current question index for the quiz
-    let currentQuestionIndex = 0;
-
     // ------------------------------------------------------------------
-    // Helper: Append a message to the chat area
+    // Rendering helpers
     // ------------------------------------------------------------------
-    function appendMessage(author, content, isHtml = false) {
-        if (!chatArea) return;
 
-        const wrapper = document.createElement("div");
-        wrapper.className = `msg ${author}`;
-
-        const avatar = author === "agent" ? "🤖" : "👤";
-        const avatarHtml = `<div class="avatar">${avatar}</div>`;
-
-        let bubbleContent;
-        if (isHtml) {
-            bubbleContent = content;
-        } else {
-            bubbleContent = escapeHtml(content).replace(/\n/g, "<br>");
-        }
-
-        wrapper.innerHTML = `
-            ${avatarHtml}
-            <div class="bubble">${bubbleContent}</div>
-        `;
-
-        // Insert before typing indicator
-        if (typingIndicator && typingIndicator.style.display !== "none") {
-            chatArea.insertBefore(wrapper, typingIndicator);
-        } else {
-            chatArea.appendChild(wrapper);
-        }
-
-        // Scroll to bottom
-        chatArea.scrollTop = chatArea.scrollHeight;
-
-        return wrapper;
-    }
-
-    // ------------------------------------------------------------------
-    // Helper: Show typing indicator
-    // ------------------------------------------------------------------
-    function showTyping() {
-        if (typingIndicator) {
-            typingIndicator.style.display = "flex";
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Helper: Hide typing indicator
-    // ------------------------------------------------------------------
-    function hideTyping() {
-        if (typingIndicator) {
-            typingIndicator.style.display = "none";
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Helper: Enable/disable send button
-    // ------------------------------------------------------------------
-    function setSendEnabled(enabled) {
-        if (sendBtn) {
-            sendBtn.disabled = !enabled;
-        }
-        if (messageInput) {
-            messageInput.disabled = !enabled;
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Helper: Show next chunk button
-    // ------------------------------------------------------------------
-    function enableNextChunk() {
-        if (nextChunkBtn) {
-            nextChunkBtn.disabled = false;
-            nextChunkBtn.classList.remove("btn-outline-secondary");
-            nextChunkBtn.classList.add("btn-success");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Helper: Escape HTML
-    // ------------------------------------------------------------------
     function escapeHtml(text) {
         const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
     }
 
+    // The same tiny Markdown subset the server-side `md_light` filter
+    // renders, so a message looks identical before and after a reload.
+    function renderContent(text) {
+        return escapeHtml(text || "")
+            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+            .replace(/^&gt;\s?(.*)$/gm, '<span class="msg-quote">$1</span>')
+            .replace(/\n/g, "<br>");
+    }
+
+    function appendMessage(author, content, options) {
+        if (!chatArea) return null;
+        const opts = options || {};
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "msg " + author;
+        if (opts.kind) wrapper.classList.add("msg--" + opts.kind);
+
+        let inner = "";
+        if (opts.badge) {
+            inner +=
+                '<div class="gap-badge"><i class="bi bi-question-circle"></i> ' +
+                escapeHtml(opts.badge) +
+                "</div>";
+        } else if (opts.kind === "validation") {
+            inner +=
+                '<div class="pass-badge"><i class="bi bi-check-circle"></i> ' +
+                "Đạt tiêu chí phần này</div>";
+        }
+        inner += renderContent(content);
+
+        wrapper.innerHTML =
+            '<div class="avatar">' +
+            (author === "agent" ? "🤖" : "👤") +
+            "</div>" +
+            '<div class="bubble">' +
+            inner +
+            "</div>";
+
+        if (typingIndicator && typingIndicator.style.display !== "none") {
+            chatArea.insertBefore(wrapper, typingIndicator);
+        } else {
+            chatArea.appendChild(wrapper);
+        }
+        chatArea.scrollTop = chatArea.scrollHeight;
+        return wrapper;
+    }
+
+    function appendSystemMessage(content) {
+        if (!chatArea) return null;
+        const wrapper = document.createElement("div");
+        wrapper.className = "msg system";
+        wrapper.innerHTML =
+            '<div class="bubble"><i class="bi bi-check-circle-fill me-2"></i>' +
+            escapeHtml(content) +
+            "</div>";
+        chatArea.appendChild(wrapper);
+        chatArea.scrollTop = chatArea.scrollHeight;
+        return wrapper;
+    }
+
+    function showTyping() {
+        if (!typingIndicator) return;
+        typingIndicator.style.display = "flex";
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function hideTyping() {
+        if (typingIndicator) typingIndicator.style.display = "none";
+    }
+
+    function setSendEnabled(enabled) {
+        if (sendBtn) sendBtn.disabled = !enabled;
+        if (messageInput) messageInput.disabled = !enabled;
+    }
+
+    function enableNextChunk() {
+        if (!nextChunkBtn) return;
+        nextChunkBtn.disabled = false;
+        nextChunkBtn.classList.remove("btn-outline-secondary");
+        nextChunkBtn.classList.add("btn-success");
+    }
+
     // ------------------------------------------------------------------
-    // Handle form submission
+    // Submit an explanation
     // ------------------------------------------------------------------
+
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const content = (messageInput?.value || "").trim();
         if (!content) return;
 
-        // Disable input while sending
         setSendEnabled(false);
-
-        // Add user message immediately
-        appendMessage("user", content);
+        appendMessage("student", content, { kind: "explanation" });
         messageInput.value = "";
-
-        // Show typing indicator
+        messageInput.style.height = "auto";
         showTyping();
 
         try {
             const payload = await window.VLearn.apiFetch(messageUrl, {
                 method: "POST",
-                body: JSON.stringify({ content }),
+                body: JSON.stringify({ content: content }),
             });
 
-            // Hide typing indicator
             hideTyping();
 
-            // Add agent message
             const agentMsg = payload.agent_message;
             if (agentMsg) {
-                appendMessage("agent", agentMsg.content);
+                appendMessage("agent", agentMsg.content, {
+                    kind: agentMsg.kind,
+                    badge: agentMsg.badge,
+                });
             }
 
-            // Check validation result
-            const validation = payload.validation;
-            if (validation) {
-                if (validation.passed) {
-                    // Chunk passed!
-                    appendSystemMessage("✓ Phần này hoàn thành!");
-                    enableNextChunk();
+            const validation = payload.validation || {};
+            const session = payload.session || {};
 
-                    // Check if all chunks are done
-                    const session = payload.session;
-                    if (session && session.status === "completed") {
-                        showLessonCompleteModal();
-                    } else {
-                        showChunkCompleteModal();
-                    }
-                } else if (validation.missing_points && validation.missing_points.length > 0) {
-                    // Show gap badge
-                    const gapMsg = appendMessage("agent", 
-                        `<strong>💡 Tôi cần làm rõ:</strong> ${validation.missing_points.join(", ")}` +
-                        `<div class="gap-badge"><i class="bi bi-exclamation-triangle"></i> Cần bổ sung</div>`
-                    );
-                    if (gapMsg) {
-                        gapMsg.querySelector(".bubble").innerHTML = gapMsg.querySelector(".bubble").innerHTML;
-                    }
+            if (validation.passed) {
+                appendSystemMessage(
+                    validation.needs_review
+                        ? "Phần này được đánh dấu để xem lại — bạn có thể đi tiếp."
+                        : "✓ Phần này hoàn thành!"
+                );
+                enableNextChunk();
+                setSendEnabled(false);
+
+                if (session.status === "completed") {
+                    showModal("lessonCompleteModal");
+                } else {
+                    showModal("chunkCompleteModal");
                 }
+            } else {
+                // Not passed: the agent's question is already on screen.
+                // Nothing further is rendered — no key points, no score.
+                setSendEnabled(true);
+                messageInput?.focus();
             }
-
         } catch (err) {
             console.error(err);
             hideTyping();
             appendMessage("agent", "⚠️ " + err.message);
-        } finally {
-            // Re-enable input
             setSendEnabled(true);
             messageInput?.focus();
         }
     });
 
     // ------------------------------------------------------------------
-    // Handle next chunk button
+    // Move to the next chunk
     // ------------------------------------------------------------------
+
     if (nextChunkBtn) {
         nextChunkBtn.addEventListener("click", async function () {
             nextChunkBtn.disabled = true;
-            nextChunkBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang tải...';
+            nextChunkBtn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>Đang tải...';
 
             try {
                 const response = await window.VLearn.apiFetch(nextUrl, {
                     method: "POST",
                 });
-
-                // Check if session is complete
                 if (response.status === "completed") {
-                    window.location.href = `/session/${sessionId}/result`;
+                    window.location.href = "/session/" + sessionId + "/result";
                 } else {
-                    // Reload page to show new chunk
                     window.location.reload();
                 }
             } catch (err) {
                 console.error(err);
                 alert("Không thể chuyển phần: " + err.message);
                 nextChunkBtn.disabled = false;
-                nextChunkBtn.innerHTML = '<i class="bi bi-arrow-right me-1"></i>Sang phần tiếp theo';
+                nextChunkBtn.innerHTML =
+                    '<i class="bi bi-arrow-right me-1"></i>Sang phần tiếp theo';
             }
         });
     }
 
     // ------------------------------------------------------------------
-    // Enter = send, Shift+Enter = newline
+    // Composer behaviour
     // ------------------------------------------------------------------
+
     if (messageInput) {
         messageInput.addEventListener("keydown", function (e) {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                form.dispatchEvent(new Event("submit"));
+                form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event("submit"));
             }
         });
 
-        // Auto-resize textarea
         messageInput.addEventListener("input", function () {
             this.style.height = "auto";
             this.style.height = Math.min(this.scrollHeight, 120) + "px";
         });
     }
 
-    // ------------------------------------------------------------------
-    // Hint chips
-    // ------------------------------------------------------------------
     window.insertHint = function (text) {
-        if (messageInput) {
-            const current = messageInput.value.trim();
-            messageInput.value = current ? current + " " + text : text;
-            messageInput.focus();
-        }
+        if (!messageInput) return;
+        const current = messageInput.value.trim();
+        messageInput.value = current ? current + " " + text : text;
+        messageInput.focus();
     };
 
     // ------------------------------------------------------------------
-    // System message helper
+    // Modals
     // ------------------------------------------------------------------
-    function appendSystemMessage(content) {
-        if (!chatArea) return;
 
-        const wrapper = document.createElement("div");
-        wrapper.className = "msg system";
-
-        wrapper.innerHTML = `
-            <div class="bubble">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                ${content}
-            </div>
-        `;
-
-        chatArea.appendChild(wrapper);
-        chatArea.scrollTop = chatArea.scrollHeight;
-
-        return wrapper;
-    }
-
-    // ------------------------------------------------------------------
-    // Modal helpers
-    // ------------------------------------------------------------------
-    function showChunkCompleteModal() {
-        const modalEl = document.getElementById("chunkCompleteModal");
-        if (modalEl && typeof bootstrap !== "undefined") {
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
+    function showModal(id) {
+        const el = document.getElementById(id);
+        if (el && typeof bootstrap !== "undefined") {
+            new bootstrap.Modal(el).show();
         }
     }
 
-    function showLessonCompleteModal() {
-        const modalEl = document.getElementById("lessonCompleteModal");
-        if (modalEl && typeof bootstrap !== "undefined") {
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-        }
-    }
-
-    // Handle proceed-next-btn in chunk complete modal
     const proceedNextBtn = document.getElementById("proceed-next-btn");
-    if (proceedNextBtn) {
+    if (proceedNextBtn && nextChunkBtn) {
         proceedNextBtn.addEventListener("click", function () {
-            if (nextChunkBtn) {
-                nextChunkBtn.click();
-            }
+            nextChunkBtn.click();
         });
     }
 
     // ------------------------------------------------------------------
-    // Scroll to bottom on load
+    // Exit confirmation — a session in progress should not vanish on a
+    // stray click (FE spec §21).
     // ------------------------------------------------------------------
+
+    const exitLink = document.getElementById("exit-session");
+    if (exitLink) {
+        exitLink.addEventListener("click", function (e) {
+            const hasProgress = chatArea && chatArea.querySelectorAll(".msg.student").length > 0;
+            if (hasProgress && !window.confirm("Bạn muốn thoát phiên dạy lại? Tiến trình hiện tại vẫn được lưu.")) {
+                e.preventDefault();
+            }
+        });
+    }
+
     if (chatArea) {
         chatArea.scrollTop = chatArea.scrollHeight;
     }
-
 })();

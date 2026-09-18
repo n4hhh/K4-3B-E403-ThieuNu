@@ -51,6 +51,23 @@ def test_gemini_provider_refuses_empty_model(monkeypatch):
         GeminiProvider(api_key="test-key-for-config", model="")
 
 
+def _genai_installed() -> bool:
+    """True when the Gemini SDK is importable.
+
+    Construction succeeds only with the SDK present; the Teach-Back path
+    runs on an OpenAI-compatible endpoint, so ``google-genai`` is not a
+    required dependency of this project.
+    """
+    try:
+        from google import genai  # type: ignore  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(
+    not _genai_installed(), reason="google-genai is not installed"
+)
 def test_gemini_provider_reads_env_when_unspecified(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-key-12345")
     monkeypatch.setenv("GEMINI_MODEL", "gemini-2.5-pro")

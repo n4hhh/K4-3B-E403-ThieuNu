@@ -1,0 +1,115 @@
+{
+  "_comment": "Built-in demo lesson. Used only when no VLearn transcripts or slide PDFs are available (fresh checkout without the data pack), and by the test suite as a fixed fixture. The real catalogue comes from ../data/vlearn-pack.",
+  "lessons": [
+    {
+      "id": "rest-api-http-methods",
+      "title": "REST API & HTTP Methods",
+      "summary": "Kiến trúc REST, mô hình client–server và các HTTP method cơ bản.",
+      "description": "Bài học giới thiệu REST API: tài nguyên được định danh bằng URL, client và server tách rời, các phương thức HTTP, nhóm status code, và tính stateless.",
+      "transcript": "REST là một kiểu kiến trúc cho web API. Mỗi tài nguyên được định danh bằng một URL. Client gửi request, server xử lý và trả về đại diện của tài nguyên. GET dùng để lấy dữ liệu, POST tạo mới, PUT cập nhật/thay thế, DELETE xoá. Status code 2xx là thành công, 4xx là lỗi phía client, 5xx là lỗi phía server. REST là stateless: mỗi request phải mang đủ ngữ cảnh, server không dựa vào state của request trước.",
+      "duration_minutes": 3,
+      "chunks": [
+        {
+          "id": "rest-api",
+          "title": "REST API",
+          "description": "REST là gì và tài nguyên được định danh ra sao.",
+          "key_points": [
+            "REST là một kiểu kiến trúc, không phải một giao thức",
+            "Tài nguyên được định danh bằng URL",
+            "Client và server tách rời nhau"
+          ],
+          "quality_bar": "Nêu được REST là kiểu kiến trúc và tài nguyên định danh bằng URL.",
+          "content": "REST là một kiểu kiến trúc cho web API, không phải một giao thức riêng. Mỗi tài nguyên được định danh bằng một URL. Client và server tách rời: hai bên chỉ giao tiếp qua giao diện đã thống nhất."
+        },
+        {
+          "id": "client-server",
+          "title": "Client – Server",
+          "description": "Vai trò của client và server trong một lời gọi API.",
+          "key_points": [
+            "Client gửi request",
+            "Server xử lý request và trả về response",
+            "Tách biệt mối quan tâm giữa hai phía"
+          ],
+          "quality_bar": "Mô tả được luồng request – response và vì sao tách biệt hai phía.",
+          "content": "Client gửi request tới server. Server xử lý request rồi trả về response. Việc tách biệt này cho phép hai phía phát triển độc lập, miễn là hợp đồng giao tiếp không đổi."
+        },
+        {
+          "id": "http-methods",
+          "title": "HTTP Methods",
+          "description": "GET, POST, PUT, DELETE dùng cho việc gì.",
+          "key_points": [
+            "GET lấy dữ liệu",
+            "POST tạo mới hoặc gửi dữ liệu lên",
+            "PUT cập nhật hoặc thay thế tài nguyên",
+            "DELETE xoá tài nguyên"
+          ],
+          "quality_bar": "Phân biệt được mục đích của ít nhất GET và POST, kèm ví dụ.",
+          "content": "GET dùng để lấy dữ liệu và không nên làm thay đổi dữ liệu. POST dùng để gửi dữ liệu lên, thường là tạo tài nguyên mới. PUT cập nhật hoặc thay thế một tài nguyên đã có. DELETE xoá tài nguyên."
+        },
+        {
+          "id": "status-codes",
+          "title": "HTTP Status Codes",
+          "description": "Ý nghĩa các nhóm mã trạng thái.",
+          "key_points": [
+            "2xx là thành công",
+            "4xx là lỗi phía client",
+            "5xx là lỗi phía server"
+          ],
+          "quality_bar": "Nêu đúng ý nghĩa của ba nhóm mã 2xx, 4xx, 5xx.",
+          "content": "Nhóm 2xx nghĩa là request thành công. Nhóm 4xx nghĩa là client gửi sai, ví dụ thiếu tham số hoặc không có quyền. Nhóm 5xx nghĩa là server gặp lỗi khi xử lý."
+        },
+        {
+          "id": "stateless",
+          "title": "Stateless",
+          "description": "Vì sao mỗi request phải tự mang đủ ngữ cảnh.",
+          "key_points": [
+            "Mỗi request chứa đủ ngữ cảnh cần thiết",
+            "Server không dựa vào state của request trước đó"
+          ],
+          "quality_bar": "Giải thích được stateless nghĩa là gì và hệ quả của nó.",
+          "content": "REST là stateless: mỗi request phải mang đủ thông tin để server xử lý được, server không lưu và không dựa vào state của request trước. Nhờ vậy có thể mở rộng bằng cách thêm server mà không cần chia sẻ phiên."
+        }
+      ]
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "quiz-rest-api-http-methods",
+      "lesson_id": "rest-api-http-methods",
+      "title": "Quiz · REST API & HTTP Methods",
+      "questions": [
+        {
+          "id": "q1",
+          "prompt": "Phương thức HTTP nào thường dùng để lấy một tài nguyên?",
+          "options": ["POST", "GET", "DELETE", "PUT"],
+          "correct_index": 1,
+          "explanation": "GET dùng để lấy dữ liệu và không nên làm thay đổi dữ liệu."
+        },
+        {
+          "id": "q2",
+          "prompt": "Mã trạng thái 4xx nghĩa là gì?",
+          "options": [
+            "Request thành công",
+            "Lỗi phía client",
+            "Lỗi phía server",
+            "Tài nguyên đã chuyển hướng"
+          ],
+          "correct_index": 1,
+          "explanation": "Nhóm 4xx báo rằng phía client gửi request sai."
+        },
+        {
+          "id": "q3",
+          "prompt": "\"Stateless\" trong REST nghĩa là gì?",
+          "options": [
+            "Server lưu phiên của từng client",
+            "Client không cần gửi header",
+            "Mỗi request phải tự mang đủ ngữ cảnh",
+            "Chỉ được dùng GET"
+          ],
+          "correct_index": 2,
+          "explanation": "Server không dựa vào state của request trước, nên mỗi request phải đủ ngữ cảnh."
+        }
+      ]
+    }
+  ]
+}

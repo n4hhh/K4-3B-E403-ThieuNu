@@ -99,7 +99,7 @@
             <!-- Chat Area -->
             <div class="chat-area" id="chat-area">
                 {% for message in session.messages %}
-                    <div class="msg {{ message.author.value }}">
+                    <div class="msg {{ message.author.value }} msg--{{ message.kind.value }}">
                         <div class="avatar">
                             {% if message.author.value == 'agent' %}
                                 🤖
@@ -108,7 +108,16 @@
                             {% endif %}
                         </div>
                         <div class="bubble">
-                            {{ message.content }}
+                            {% if message.badge %}
+                                <div class="gap-badge">
+                                    <i class="bi bi-question-circle"></i> {{ message.badge }}
+                                </div>
+                            {% elif message.kind.value == 'validation' %}
+                                <div class="pass-badge">
+                                    <i class="bi bi-check-circle"></i> Đạt tiêu chí phần này
+                                </div>
+                            {% endif %}
+                            {{ message.content | md_light }}
                         </div>
                     </div>
                 {% endfor %}
@@ -164,13 +173,21 @@
                 <!-- Actions -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="next-chunk-btn" disabled>
+                        {# A reload after a pass must keep the button usable. #}
+                        {% set current_state = session.chunk_states.get(session.current_chunk_id) %}
+                        {% set chunk_done = current_state is not none and current_state.value == 'completed' %}
+                        <button type="button"
+                                class="btn btn-sm {% if chunk_done %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                id="next-chunk-btn"
+                                {% if not chunk_done %}disabled{% endif %}>
                             <i class="bi bi-arrow-right me-1"></i>
                             Sang phần tiếp theo
                         </button>
                     </div>
                     <div>
-                        <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="btn btn-link btn-sm text-muted">
+                        <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}"
+                           id="exit-session"
+                           class="btn btn-link btn-sm text-muted">
                             <i class="bi bi-x-lg me-1"></i> Thoát
                         </a>
                     </div>

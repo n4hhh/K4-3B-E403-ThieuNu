@@ -24,54 +24,84 @@
                 </div>
             </div>
 
-            <!-- Stats Summary -->
+            <!-- Learning Result -->
             <div class="px-4 pb-4">
+                {# The numbers describe learning behaviour, not a score.
+                   Track D is explicit that this must not feel like secret
+                   grading, so there is no percentage and no "AI confidence". #}
                 <div class="summary-grid">
                     <div class="stat-card">
-                        <div class="num">{{ session.completed_chunk_count }}</div>
-                        <div class="label">Phần hoàn thành</div>
-                    </div>
-                    <div class="stat-card">
                         <div class="num">
-                            {% set total_attempts = namespace(total=0) %}
-                            {% for cid, attempts in session.attempts_per_chunk.items() %}
-                                {% set total_attempts.total = total_attempts.total + attempts %}
-                            {% endfor %}
-                            {{ total_attempts.total }}
+                            {{ result.completed_chunks | length }}/{{ result.total_chunks }}
                         </div>
-                        <div class="label">Lần tương tác</div>
+                        <div class="label">Phần đã dạy lại</div>
                     </div>
                     <div class="stat-card">
-                        <div class="num">{{ session.total_chunk_count }}/{{ session.total_chunk_count }}</div>
-                        <div class="label">Tiêu chí đạt</div>
+                        <div class="num">{{ result.teaching_loops }}</div>
+                        <div class="label">Lượt giải thích</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="num">{{ result.clarifications }}</div>
+                        <div class="label">Lần được hỏi lại</div>
                     </div>
                 </div>
 
-                <!-- Chunk Details -->
+                <!-- Areas clarified -->
+                {% if result.clarified_areas %}
+                <h2 class="h5 mt-4 mb-3">
+                    <i class="bi bi-lightbulb text-warning me-2"></i>
+                    Những chỗ bạn đã làm rõ thêm
+                </h2>
+                <ul class="list-group mb-2">
+                    {% for area in result.clarified_areas[:6] %}
+                        <li class="list-group-item d-flex align-items-start">
+                            <i class="bi bi-arrow-right-circle text-primary me-3 mt-1"></i>
+                            <span>{{ area }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="small text-muted">
+                    Đây là những điểm agent hỏi ngược trong lúc bạn dạy — không
+                    phải lỗi, mà là chỗ đáng xem lại.
+                </p>
+                {% endif %}
+
+                <!-- Needs review -->
+                {% if result.needs_review %}
+                <div class="alert alert-warning d-flex align-items-start" role="alert">
+                    <i class="bi bi-bookmark-star me-3 mt-1"></i>
+                    <div>
+                        <strong>Nên xem lại</strong>
+                        <div class="small">
+                            {{ result.needs_review | join(' · ') }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Per-chunk detail -->
                 <h2 class="h5 mt-4 mb-3">
                     <i class="bi bi-list-check me-2"></i>
                     Chi tiết từng phần
                 </h2>
                 <div class="chunk-preview">
-                    {% for chunk in lesson.chunks %}
-                        {% set state = session.chunk_states.get(chunk.id) %}
-                        <div class="chunk-row {% if state.value == 'completed' %}done{% endif %}">
+                    {% for row in result.per_chunk %}
+                        <div class="chunk-row {% if row.status == 'completed' %}done{% endif %}">
                             <div class="check">
-                                {% if state.value == 'completed' %}
+                                {% if row.status == 'completed' %}
                                     <i class="bi bi-check"></i>
                                 {% endif %}
                             </div>
                             <div class="body">
-                                <strong>{{ loop.index }}. {{ chunk.title }}</strong>
+                                <strong>{{ loop.index }}. {{ row.title }}</strong>
                                 <span>
-                                    {% if chunk.id in session.attempts_per_chunk %}
-                                        {{ session.attempts_per_chunk[chunk.id] }} lần tương tác
-                                    {% else %}
-                                        Hoàn thành
-                                    {% endif %}
+                                    {{ row.loops }} lượt giải thích
+                                    {% if row.needs_review %} · cần xem lại{% endif %}
                                 </span>
                             </div>
-                            <span class="mascot-icon">✅</span>
+                            <span class="mascot-icon">
+                                {% if row.needs_review %}🔖{% elif row.status == 'completed' %}✅{% else %}⏳{% endif %}
+                            </span>
                         </div>
                     {% endfor %}
                 </div>
@@ -88,11 +118,17 @@
                         <i class="bi bi-arrow-left me-1"></i>
                         Về bài học
                     </a>
+                    <a href="{{ url_for('api_session_log', session_id=session.id) }}"
+                       class="btn btn-outline-secondary" target="_blank" rel="noopener">
+                        <i class="bi bi-journal-text me-1"></i>
+                        Log phiên (JSON)
+                    </a>
                 </div>
 
                 <p class="text-center text-muted small mt-4 mb-0">
                     <i class="bi bi-info-circle me-1"></i>
-                    Tiếp tục với quiz để kiểm tra kiến thức của bạn một cách độc lập.
+                    Phiên dạy lại là để luyện, không phải để chấm điểm. Quiz bên
+                    dưới mới là phần kiểm tra kiến thức độc lập.
                 </p>
             </div>
         </div>

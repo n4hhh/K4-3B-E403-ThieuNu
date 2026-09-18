@@ -9,10 +9,20 @@ from app.repositories.lesson_repository import LessonRepository
 
 
 class LessonService:
-    """Loads lessons / chunks / quizzes via the repository."""
+    """Loads lessons / chunks / quizzes via the repository.
 
-    def __init__(self, repository: Optional[LessonRepository] = None) -> None:
+    ``quiz_service``, when supplied, generates a quiz from the lesson's
+    own source text and falls back to whatever the repository holds. It
+    is optional so the scaffold (and the tests) can run without it.
+    """
+
+    def __init__(
+        self,
+        repository: Optional[LessonRepository] = None,
+        quiz_service: Optional[object] = None,
+    ) -> None:
         self._repo = repository or LessonRepository()
+        self._quiz_service = quiz_service
 
     # ------------------------------------------------------------------
     # Lessons
@@ -38,4 +48,12 @@ class LessonService:
     # ------------------------------------------------------------------
 
     def get_quiz(self, lesson_id: str) -> Optional[Quiz]:
-        return self._repo.get_quiz(lesson_id)
+        """Return the lesson's quiz, generating one when possible."""
+        stored = self._repo.get_quiz(lesson_id)
+        if self._quiz_service is None:
+            return stored
+
+        lesson = self._repo.get_lesson(lesson_id)
+        if lesson is None:
+            return stored
+        return self._quiz_service.get_quiz(lesson, fallback=stored)

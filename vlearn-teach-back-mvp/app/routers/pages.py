@@ -4,11 +4,14 @@ These are intentionally thin: they delegate to services for data
 and just render templates.
 """
 
+import html
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from app.services.lesson_service import LessonService
 from app.services.teaching_service import TeachingService
@@ -18,6 +21,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
+_QUOTE_RE = re.compile(r"^&gt;\s?(.*)$", re.MULTILINE)
+
+
+def md_light(text: str) -> Markup:
+    """Render the tiny Markdown subset the agent actually emits.
+
+    The agent bolds chunk titles and uses ``>`` for the chunk summary.
+    Pulling in a Markdown library to support two constructs would also
+    mean auditing it for HTML injection, since part of every message is
+    derived from model output. Escaping first and then allowing exactly
+    two tags is both smaller and safer.
+    """
+    escaped = html.escape(text or "")
+    escaped = _QUOTE_RE.sub(r'<span class="msg-quote">\1</span>', escaped)
+    escaped = _BOLD_RE.sub(r"<strong>\1</strong>", escaped)
+    return Markup(escaped.replace("\n", "<br>"))
+
+
+templates.env.filters["md_light"] = md_light
 
 
 def get_teaching_service(request: Request) -> TeachingService:
@@ -109,7 +134,29 @@ def lesson_result(request: Request, session_id: str):
     return templates.TemplateResponse(
         request=request,
         name="result.html",
-        context={"request": request, "session": session, "lesson": lesson},
+        context={
+            "request": request,
+            "session": session,
+            "lesson": lesson,
+            "result": teaching_service.build_result(session_id) or {},
+        },
+    )
+
+
+@router.get("/instructor", response_class=HTMLResponse, name="instructor")
+def instructor(request: Request):
+    """Instructor view: what the class got stuck on.
+
+    Sessions are listed by id only. The MVP has no accounts, and the
+    track D safety note is explicit that individual mistakes must not be
+    exposed to the class — so nothing here identifies a student.
+    """
+    log_service = getattr(request.app.state, "session_log_service", None)
+    sessions = log_service.list_recent() if log_service is not None else []
+    return templates.TemplateResponse(
+        request=request,
+        name="instructor.html",
+        context={"request": request, "sessions": sessions},
     )
 
 

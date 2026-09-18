@@ -26,11 +26,16 @@ from app.repositories.lesson_repository import LessonRepository
 from app.repositories.published_lesson_repository import (
     PublishedLessonRepository,
 )
+from app.services.ai.chat_provider import build_chat_provider_safe
+from app.services.ai_validator_service import AIValidatorService
+from app.services.lesson_prep_service import LessonPrepService
 from app.services.lesson_service import LessonService
-from app.services.mock_agent_service import MockAgentService
 from app.services.pdf_lesson_service import PDFLessonService
+from app.services.quiz_service import QuizService
+from app.services.session_log_service import SessionLogService
+from app.services.teach_back_agent_service import TeachBackAgentService
 from app.services.teaching_service import TeachingService
-from app.services.validator_service import ValidatorService
+from app.services.transcript_lesson_service import TranscriptLessonService
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,20 +85,62 @@ def create_app() -> FastAPI:
         logger.exception("Failed to load PDF lessons: %s", exc)
         discovered = []
 
+    # Lecture transcripts from the VLearn data pack. Read-only, parsed in
+    # memory — nothing from the pack is ever written into this repo.
+    application.state.transcript_lesson_service = TranscriptLessonService(
+        transcript_dir=settings.transcript_dir,
+        max_chunks=settings.teach_back_max_chunks,
+    )
+
     application.state.lesson_repository = LessonRepository(
         pdf_service=application.state.pdf_lesson_service,
         json_fallback=settings.json_fallback_file,
         published_repo=PublishedLessonRepository(),
+        transcript_service=application.state.transcript_lesson_service,
+    )
+
+    # One chat provider, shared by everything that talks to the model.
+    # ``_safe`` degrades to the offline mock instead of refusing to boot:
+    # a missing key should cost AI quality, not the whole app.
+    chat_provider = build_chat_provider_safe(settings.teach_back_provider)
+    application.state.chat_provider = chat_provider
+    ai_enabled = getattr(chat_provider, "name", "mock") != "mock"
+    logger.info(
+        "Teach-Back chat provider: %s (model=%s, ai_enabled=%s)",
+        getattr(chat_provider, "name", "?"),
+        getattr(chat_provider, "model", "?"),
+        ai_enabled,
+    )
+
+    application.state.lesson_prep_service = LessonPrepService(
+        provider=chat_provider,
+        cache_dir=settings.cache_dir,
+        enabled=ai_enabled,
+    )
+    application.state.quiz_service = QuizService(
+        provider=chat_provider,
+        cache_dir=settings.cache_dir,
+        enabled=ai_enabled,
     )
     application.state.lesson_service = LessonService(
         repository=application.state.lesson_repository,
+        quiz_service=application.state.quiz_service,
     )
-    application.state.validator_service = ValidatorService()
-    application.state.agent_service = MockAgentService()
+    application.state.validator_service = AIValidatorService(
+        provider=chat_provider,
+        max_attempts=settings.teach_back_max_attempts,
+        enabled=ai_enabled,
+    )
+    application.state.agent_service = TeachBackAgentService()
+    application.state.session_log_service = SessionLogService(
+        log_dir=settings.session_log_dir,
+    )
     application.state.teaching_service = TeachingService(
         lesson_service=application.state.lesson_service,
         validator=application.state.validator_service,
         agent=application.state.agent_service,
+        preparer=application.state.lesson_prep_service,
+        session_log=application.state.session_log_service,
     )
     logger.info(
         "LessonRepository source: %s (%d lessons).",

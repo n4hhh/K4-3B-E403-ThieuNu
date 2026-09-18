@@ -2,12 +2,21 @@
 
 Lesson source priority:
 
-    1. PDFs discovered by ``PDFLessonService`` in ``VLEARN_LESSON_DIR``
+    1. Lecture transcripts parsed by ``TranscriptLessonService`` from the
+       VLearn data pack (``data/vlearn-pack/transcript``). These carry
+       per-paragraph citation codes, so the teach-back agent can point at
+       the exact passage behind a verdict.
+    2. PDFs discovered by ``PDFLessonService`` in ``VLEARN_LESSON_DIR``
        (or the default ``../data/lesson``).
-    2. Fallback to ``data/lessons.json`` when no PDFs are available.
+    3. Fallback to ``data/lessons.json`` when neither is available.
 
-The repository never reads PDFs on the HTTP path — all extraction is
-performed once at startup (or on first call) and cached.
+Transcripts and PDFs are merged into one catalogue: a deployment with
+both slide decks and transcripts shows both. The JSON fallback is used
+only when nothing else produced a lesson, so a fresh checkout without
+the data pack still has something clickable.
+
+The repository never reads source files on the HTTP path — all
+extraction is performed once at startup (or on first call) and cached.
 """
 
 from __future__ import annotations
@@ -46,8 +55,11 @@ class LessonRepository:
         # Phase 3A.5 — when provided, the repository prefers published
         # StructuredLessons over PDF-derived lessons (when available).
         published_repo: Optional[PublishedLessonRepository] = None,
+        # Teach-Back — lessons built from the data pack's transcripts.
+        transcript_service: Optional[object] = None,
     ) -> None:
         self._pdf_service = pdf_service
+        self._transcript_service = transcript_service
         if json_fallback is None and lessons_file is not None:
             json_fallback = Path(lessons_file)
         self._json_fallback = (
@@ -71,26 +83,44 @@ class LessonRepository:
             return
         self._loaded = True
 
+        sources: List[str] = []
+
+        if self._transcript_service is not None:
+            try:
+                transcript_lessons = self._transcript_service.list_lessons()
+            except Exception as exc:  # noqa: BLE001 - never block startup
+                logger.warning("TranscriptLessonService failed: %s", exc)
+                transcript_lessons = []
+            if transcript_lessons:
+                for lesson in transcript_lessons:
+                    self._lessons[lesson.id] = lesson
+                sources.append("transcript")
+                logger.info(
+                    "LessonRepository loaded %d lesson(s) from transcripts.",
+                    len(transcript_lessons),
+                )
+
         if self._pdf_service is not None:
             pdf_lessons = self._pdf_service.list_lessons()
             if pdf_lessons:
                 for lesson in pdf_lessons:
                     self._lessons[lesson.id] = lesson
-                self._lessons_list = list(self._lessons.values())
-                self._source = "pdf"
+                sources.append("pdf")
                 logger.info(
                     "LessonRepository loaded %d lesson(s) from PDFs.",
-                    len(self._lessons),
-                )
-                self._overlay_published_lessons()
-                return
-            else:
-                logger.info(
-                    "PDFLessonService returned no lessons — "
-                    "falling back to JSON at %s.",
-                    self._json_fallback,
+                    len(pdf_lessons),
                 )
 
+        if self._lessons:
+            self._lessons_list = list(self._lessons.values())
+            self._source = "+".join(sources)
+            self._overlay_published_lessons()
+            return
+
+        logger.info(
+            "No transcript or PDF lessons — falling back to JSON at %s.",
+            self._json_fallback,
+        )
         self._load_from_json()
         self._lessons_list = list(self._lessons.values())
         self._source = "json"

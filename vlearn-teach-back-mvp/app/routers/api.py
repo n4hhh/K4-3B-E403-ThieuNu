@@ -78,7 +78,7 @@ def create_session(request: Request, payload: CreateSessionRequest):
         raise HTTPException(
             status_code=404, detail=f"Lesson '{payload.lesson_id}' not found"
         )
-    return session.model_dump()
+    return session.public_dump()
 
 
 @router.get(
@@ -90,7 +90,7 @@ def get_session(request: Request, session_id: str):
     session = teaching_service.get_session(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
-    return session.model_dump()
+    return session.public_dump()
 
 
 @router.post(
@@ -116,7 +116,7 @@ def next_chunk(request: Request, session_id: str):
     session = teaching_service.advance_chunk(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
-    return session.model_dump()
+    return session.public_dump()
 
 
 @router.get(
@@ -124,7 +124,30 @@ def next_chunk(request: Request, session_id: str):
     name="api_session_result",
 )
 def session_result(request: Request, session_id: str):
-    """Return the learning result for a finished session."""
+    """Return the learning result for a session."""
+    teaching_service = get_teaching_service(request)
+    result = teaching_service.build_result(session_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+    return result
+
+
+@router.get(
+    "/teaching-sessions/{session_id}/log",
+    name="api_session_log",
+)
+def session_log(request: Request, session_id: str):
+    """Return the instructor log for a session.
+
+    Falls back to building it from the live session when the log file
+    has not been written yet (e.g. the session has had no turns).
+    """
+    log_service = getattr(request.app.state, "session_log_service", None)
+    if log_service is not None:
+        stored = log_service.read(session_id)
+        if stored is not None:
+            return stored
+
     teaching_service = get_teaching_service(request)
     session = teaching_service.get_session(session_id)
     if session is None:
@@ -133,9 +156,32 @@ def session_result(request: Request, session_id: str):
         "session_id": session.id,
         "lesson_id": session.lesson_id,
         "status": session.status.value,
-        "completed_chunks": [
-            cid for cid, cs in session.chunk_states.items()
-            if cs.value == "completed"
-        ],
-        "total_chunks": len(session.chunk_states),
+        "result": teaching_service.build_result(session_id) or {},
+        "gaps": session.gap_log,
+        "transcript": [m.model_dump(mode="json") for m in session.messages],
+    }
+
+
+@router.get("/instructor/sessions", name="api_instructor_sessions")
+def instructor_sessions(request: Request, limit: int = 50):
+    """Return recent session summaries for the instructor dashboard."""
+    log_service = getattr(request.app.state, "session_log_service", None)
+    if log_service is None:
+        return {"sessions": []}
+    return {"sessions": log_service.list_recent(limit=limit)}
+
+
+@router.get("/health/ai", name="api_ai_health")
+def ai_health(request: Request):
+    """Report which chat provider is live.
+
+    The demo needs a one-glance answer to "is this really calling the
+    model, or is it running on heuristics right now?".
+    """
+    provider = getattr(request.app.state, "chat_provider", None)
+    name = getattr(provider, "name", "none")
+    return {
+        "provider": name,
+        "model": getattr(provider, "model", ""),
+        "ai_enabled": name not in ("mock", "none"),
     }

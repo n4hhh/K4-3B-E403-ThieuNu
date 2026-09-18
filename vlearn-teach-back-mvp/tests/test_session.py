@@ -7,20 +7,20 @@ from app.services.lesson_service import LessonService
 from app.services.teaching_service import TeachingService
 
 
-def test_create_session_via_api(client):
+def test_create_session_via_api(client, demo_lesson_id):
     response = client.post(
-        "/api/teaching-sessions", json={"lesson_id": "rest-api-http-methods"}
+        "/api/teaching-sessions", json={"lesson_id": demo_lesson_id}
     )
     assert response.status_code == 201, response.text
     body = response.json()
-    assert body["lesson_id"] == "rest-api-http-methods"
+    assert body["lesson_id"] == demo_lesson_id
     assert body["status"] == "in_progress"
     assert len(body["chunk_order"]) == 5
 
 
-def test_get_session_returns_state(client):
+def test_get_session_returns_state(client, demo_lesson_id):
     created = client.post(
-        "/api/teaching-sessions", json={"lesson_id": "rest-api-http-methods"}
+        "/api/teaching-sessions", json={"lesson_id": demo_lesson_id}
     ).json()
     session_id = created["id"]
 
