@@ -1,0 +1,14 @@
+{% for message in session.messages %}
+    <div class="chat-message chat-message--{{ message.author.value }}">
+        <div class="chat-message__author">
+            {% if message.author.value == "agent" %}
+                <i class="bi bi-robot"></i> Agent
+            {% else %}
+                <i class="bi bi-person-circle"></i> You
+            {% endif %}
+        </div>
+        <div class="chat-message__bubble">
+            {{ message.content }}
+        </div>
+    </div>
+{% endfor %}

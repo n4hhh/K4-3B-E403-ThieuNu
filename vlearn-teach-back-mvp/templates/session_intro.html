@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Bắt đầu dạy · {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card animate-fade-in">
+            <!-- Hero Section -->
+            <div class="intro-hero">
+                <div class="mascot-stage">
+                    <span class="mascot">🤖</span>
+                </div>
+                <h1>
+                    <i class="bi bi-chat-quote me-2"></i>
+                    Sẵn sàng dạy lại cho Agent?
+                </h1>
+                <p class="lead">
+                    Bạn sẽ dạy Agent về <strong>{{ lesson.title }}</strong>.
+                    Agent sẽ lắng nghe và đặt câu hỏi để kiểm tra sự hiểu biết của bạn.
+                </p>
+            </div>
+
+            <!-- How It Works -->
+            <div class="px-4 pb-4">
+                <div class="card" style="background: var(--vl-pink-50); border: none;">
+                    <div class="card-body">
+                        <h2 class="h6 mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Cách hoạt động
+                        </h2>
+                        <div class="row g-3">
+                            <div class="col-md-4 text-center">
+                                <div class="mb-2">
+                                    <i class="bi bi-1-circle-fill" style="font-size: 2rem; color: var(--vl-pink-500);"></i>
+                                </div>
+                                <p class="small mb-0">
+                                    <strong>Bạn giải thích</strong><br>
+                                    Dạy lại từng phần của bài học
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="mb-2">
+                                    <i class="bi bi-2-circle-fill" style="font-size: 2rem; color: var(--vl-pink-500);"></i>
+                                </div>
+                                <p class="small mb-0">
+                                    <strong>Agent hỏi lại</strong><br>
+                                    Kiểm tra điểm bạn chưa nắm vững
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="mb-2">
+                                    <i class="bi bi-3-circle-fill" style="font-size: 2rem; color: var(--vl-green);"></i>
+                                </div>
+                                <p class="small mb-0">
+                                    <strong>Hoàn thành</strong><br>
+                                    Khi đạt đủ tiêu chí
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chunk Preview -->
+                <div class="mt-4">
+                    <h2 class="h5 mb-3">
+                        <i class="bi bi-stack me-2"></i>
+                        Các phần cần dạy ({{ lesson.chunks|length }} phần)
+                    </h2>
+                    <div class="chunk-preview">
+                        {% for chunk in lesson.chunks %}
+                            <div class="chunk-row">
+                                <div class="num">{{ loop.index }}</div>
+                                <div class="body">
+                                    <strong>{{ chunk.title }}</strong>
+                                    <span>{{ chunk.description }}</span>
+                                </div>
+                                <span class="mascot-icon">📚</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="text-center mt-4">
+                    <form id="start-session-form"
+                          data-lesson-id="{{ lesson.id }}"
+                          data-create-url="/api/teaching-sessions"
+                          data-redirect-pattern="/session/{id}">
+                        <button type="submit" class="btn btn-primary btn-lg" id="start-btn">
+                            <i class="bi bi-play-fill me-2"></i>
+                            Bắt đầu phiên học
+                        </button>
+                    </form>
+                    <p class="text-muted small mt-3 mb-0">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Agent sẽ không tiết lộ đáp án — chỉ đặt câu hỏi làm rõ
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="text-center mt-3">
+            <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại bài học
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+    
+    const form = document.getElementById('start-session-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('start-btn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang tạo phiên học...';
+        
+        const lessonId = form.dataset.lessonId;
+        const createUrl = form.dataset.createUrl;
+        const redirectPattern = form.dataset.redirectPattern || '/session/{id}';
+        
+        try {
+            const response = await fetch(createUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lesson_id: lessonId })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create session');
+            }
+            
+            const session = await response.json();
+            window.location.href = redirectPattern.replace('{id}', session.id);
+        } catch (err) {
+            console.error(err);
+            alert('Không thể bắt đầu phiên học: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+})();
+</script>
+{% endblock %}

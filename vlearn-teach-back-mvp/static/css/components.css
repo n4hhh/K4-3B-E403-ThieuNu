@@ -1,0 +1,706 @@
+/* components.css — VLearn UI components */
+
+/* ============== Session Shell ============== */
+.session-shell {
+    background: #fff;
+    border-radius: var(--vl-radius-lg);
+    border: 2px solid var(--vl-pink-100);
+    box-shadow: var(--vl-shadow-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+    min-height: 500px;
+}
+
+.session-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, var(--vl-pink-50), var(--vl-pink-100));
+    border-bottom: 2px solid var(--vl-pink-200);
+    flex-shrink: 0;
+}
+
+.session-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--vl-pink-700);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.session-title i {
+    color: var(--vl-pink-500);
+}
+
+/* ============== Stepper / Progress Dots ============== */
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--vl-pink-300);
+    color: var(--vl-pink-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.step-dot.done {
+    background: var(--vl-green);
+    border-color: var(--vl-green-dark);
+    color: #fff;
+}
+
+.step-dot.current {
+    background: var(--vl-pink-500);
+    border-color: var(--vl-pink-700);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 107, 149, 0.25);
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.step-line {
+    flex: 1;
+    height: 3px;
+    background: var(--vl-pink-200);
+    border-radius: 2px;
+    transition: background 0.3s;
+}
+
+.step-line.done {
+    background: var(--vl-green);
+}
+
+/* ============== Chat Area ============== */
+.chat-area {
+    flex: 1;
+    padding: 1.5rem;
+    background: var(--vl-soft-white);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ============== Messages ============== */
+.msg {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 85%;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.msg.agent {
+    align-self: flex-start;
+}
+
+.msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.msg .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--vl-pink-100), var(--vl-pink-200));
+    border: 2px solid var(--vl-pink-300);
+    box-shadow: 0 2px 8px rgba(255, 143, 171, 0.15);
+}
+
+.msg.user .avatar {
+    background: linear-gradient(135deg, var(--vl-pink-200), var(--vl-pink-400));
+    border-color: var(--vl-pink-500);
+}
+
+.msg .bubble {
+    padding: 0.9rem 1.1rem;
+    border-radius: 18px;
+    background: #fff;
+    border: 2px solid var(--vl-pink-100);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--vl-ink);
+    box-shadow: 0 2px 8px rgba(255, 143, 171, 0.08);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.msg.agent .bubble {
+    border-bottom-left-radius: 4px;
+}
+
+.msg.user .bubble {
+    background: linear-gradient(135deg, var(--vl-pink-500), var(--vl-pink-600));
+    color: #fff;
+    border-color: var(--vl-pink-700);
+    border-bottom-right-radius: 4px;
+}
+
+.msg .bubble strong {
+    color: var(--vl-pink-700);
+}
+
+.msg.user .bubble strong {
+    color: var(--vl-pink-100);
+}
+
+.msg .bubble .bi {
+    vertical-align: middle;
+}
+
+/* ============== Gap Badge ============== */
+.gap-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    padding: 0.4rem 0.8rem;
+    background: #fff5e6;
+    color: #b86500;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--vl-orange);
+}
+
+.gap-badge i {
+    font-size: 0.9rem;
+}
+
+/* ============== System Message ============== */
+.msg.system {
+    align-self: center;
+    max-width: 90%;
+}
+
+.msg.system .bubble {
+    background: linear-gradient(135deg, #e6fbd6, #d4f5b0);
+    border-color: var(--vl-green);
+    color: #2e7a02;
+    text-align: center;
+    padding: 0.6rem 1rem;
+}
+
+.msg.system .bubble i {
+    color: var(--vl-green);
+}
+
+/* ============== Typing Indicator ============== */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: var(--vl-pink-400);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ============== Composer / Input Area ============== */
+.composer {
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border-top: 2px solid var(--vl-pink-100);
+    flex-shrink: 0;
+}
+
+.composer-input {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.composer-input textarea {
+    flex: 1;
+    border: 2px solid var(--vl-pink-200);
+    border-radius: var(--vl-radius-md);
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: none;
+    min-height: 48px;
+    max-height: 120px;
+    background: var(--vl-pink-50);
+    color: var(--vl-ink);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.composer-input textarea:focus {
+    border-color: var(--vl-pink-500);
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 149, 0.15);
+}
+
+.composer-input textarea::placeholder {
+    color: var(--vl-ink-soft);
+    opacity: 0.7;
+}
+
+/* ============== Hint Chips ============== */
+.hint-row {
+    padding: 0.75rem 1.5rem 0;
+    background: #fff;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.hint-chip {
+    background: var(--vl-pink-100);
+    color: var(--vl-pink-700);
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.hint-chip:hover {
+    background: var(--vl-pink-200);
+    transform: translateY(-1px);
+}
+
+.hint-chip i {
+    font-size: 0.9rem;
+}
+
+/* ============== Chunk Preview Rows ============== */
+.chunk-preview {
+    margin: 1.5rem 0;
+}
+
+.chunk-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--vl-pink-50);
+    border-radius: var(--vl-radius-md);
+    margin-bottom: 0.6rem;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.chunk-row:hover {
+    background: var(--vl-pink-100);
+}
+
+.chunk-row.locked {
+    opacity: 0.5;
+}
+
+.chunk-row.current {
+    border-color: var(--vl-pink-400);
+    background: #fff;
+    box-shadow: var(--vl-shadow-card);
+}
+
+.chunk-row.done {
+    background: #e6fbd6;
+    border-color: #a8d802;
+}
+
+.chunk-row .check {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--vl-pink-200);
+    color: var(--vl-pink-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.chunk-row.done .check {
+    background: var(--vl-green);
+    color: #fff;
+}
+
+.chunk-row .num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--vl-pink-200);
+    color: var(--vl-pink-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.chunk-row .body {
+    flex: 1;
+}
+
+.chunk-row .body strong {
+    display: block;
+    color: var(--vl-ink);
+    font-size: 1rem;
+}
+
+.chunk-row .body span {
+    font-size: 0.85rem;
+    color: var(--vl-ink-soft);
+}
+
+.chunk-row .mascot-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* ============== Lesson Header ============== */
+.lesson-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.lesson-cover {
+    width: 80px;
+    height: 80px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--vl-pink-300), var(--vl-pink-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2rem;
+    box-shadow: var(--vl-shadow-soft);
+    flex-shrink: 0;
+}
+
+.lesson-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ============== Intro Hero ============== */
+.intro-hero {
+    text-align: center;
+    padding: 2rem 1.5rem 1.5rem;
+}
+
+.intro-hero h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.intro-hero p {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mascot-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--vl-pink-100), var(--vl-pink-200));
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1rem;
+    box-shadow: var(--vl-shadow-soft);
+}
+
+.mascot-stage .mascot {
+    font-size: 4rem;
+    animation: bounce 3s ease-in-out infinite;
+}
+
+/* ============== Celebrate / Success ============== */
+.celebrate {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+}
+
+.celebrate h1 {
+    font-size: 1.75rem;
+    margin: 0.75rem 0;
+}
+
+.xp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #fff;
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    font-weight: 800;
+    margin: 1rem 0;
+    box-shadow: 0 4px 0 #b86500;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.stat-card {
+    background: var(--vl-pink-50);
+    border-radius: var(--vl-radius-md);
+    padding: 1rem;
+    text-align: center;
+}
+
+.stat-card .num {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--vl-pink-700);
+}
+
+.stat-card .label {
+    font-size: 0.8rem;
+    color: var(--vl-ink-soft);
+    margin-top: 0.25rem;
+}
+
+/* ============== Quiz Components ============== */
+.quiz-card {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.quiz-progress {
+    height: 8px;
+    background: var(--vl-pink-100);
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+
+.quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--vl-pink-400), var(--vl-pink-600));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.quiz-question {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--vl-ink);
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
+}
+
+.quiz-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 2px solid var(--vl-pink-200);
+    border-bottom-width: 4px;
+    border-radius: var(--vl-radius-md);
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--vl-ink);
+    transition: all 0.15s;
+}
+
+.quiz-option:hover:not(:disabled) {
+    background: var(--vl-pink-50);
+    border-color: var(--vl-pink-400);
+}
+
+.quiz-option.selected {
+    background: var(--vl-pink-100);
+    border-color: var(--vl-pink-500);
+    color: var(--vl-pink-700);
+}
+
+.quiz-option.correct {
+    background: #e6fbd6;
+    border-color: var(--vl-green);
+    color: #2e7a02;
+}
+
+.quiz-option.wrong {
+    background: #ffe0e6;
+    border-color: var(--vl-red);
+    color: #b30000;
+}
+
+.quiz-option:disabled {
+    cursor: default;
+}
+
+.quiz-feedback {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--vl-radius-md);
+    background: var(--vl-pink-50);
+    border-left: 4px solid var(--vl-pink-500);
+    font-size: 0.95rem;
+    color: var(--vl-ink);
+    display: none;
+}
+
+.quiz-feedback.show {
+    display: block;
+    animation: fadeInUp 0.3s;
+}
+
+/* ============== Result Grid ============== */
+.result-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chunk-list .chunk-row.weak {
+    background: #fff0f3;
+    border-color: var(--vl-pink-300);
+}
+
+/* ============== Sidebar (Chunks on Teaching Page) ============== */
+.chunks-sidebar .card {
+    position: sticky;
+    top: 1rem;
+}
+
+/* ============== Empty State ============== */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--vl-ink-soft);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--vl-pink-300);
+    margin-bottom: 1rem;
+}
+
+/* ============== Error State ============== */
+.error-state {
+    background: #ffe0e6;
+    border: 2px solid var(--vl-red);
+    border-radius: var(--vl-radius-md);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.error-state i {
+    color: var(--vl-red);
+    font-size: 1.5rem;
+}
+
+.error-state .error-message {
+    flex: 1;
+    color: #b30000;
+}
+
+/* ============== Responsive Adjustments ============== */
+@media (max-width: 992px) {
+    .session-shell {
+        height: calc(100vh - 200px);
+    }
+    
+    .msg {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .session-shell {
+        height: calc(100vh - 160px);
+        border-radius: var(--vl-radius-md);
+    }
+    
+    .session-header {
+        padding: 1rem;
+    }
+    
+    .chat-area {
+        padding: 1rem;
+    }
+    
+    .composer {
+        padding: 0.75rem 1rem;
+    }
+    
+    .hint-row {
+        padding: 0.5rem 1rem 0;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .chunk-row {
+        padding: 0.75rem 1rem;
+    }
+    
+    .chunk-row .check,
+    .chunk-row .num {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+}

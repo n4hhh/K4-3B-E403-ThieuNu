@@ -1,0 +1,325 @@
+/* style.css — VLearn theme and global styles */
+
+/* ============== Theme: Hồng phấn + VLearn branding ============== */
+:root {
+    --vl-pink-50: #fff5f7;
+    --vl-pink-100: #ffe4ec;
+    --vl-pink-200: #ffc9d9;
+    --vl-pink-300: #ffb3c8;
+    --vl-pink-400: #ff8fab;
+    --vl-pink-500: #ff6b95;
+    --vl-pink-600: #e84d7f;
+    --vl-pink-700: #c83768;
+    --vl-cream: #fffaf3;
+    --vl-soft-white: #fff9fb;
+    --vl-ink: #3b1f2b;
+    --vl-ink-soft: #6b4a59;
+    --vl-green: #58cc02;
+    --vl-green-dark: #4bae02;
+    --vl-orange: #ff9600;
+    --vl-red: #ff4b4b;
+    --vl-shadow-soft: 0 4px 0 rgba(200, 55, 104, 0.2);
+    --vl-shadow-card: 0 6px 20px rgba(255, 143, 171, 0.15);
+    --vl-radius-lg: 16px;
+    --vl-radius-md: 12px;
+    --vl-radius-sm: 8px;
+}
+
+/* ============== Global Reset & Base ============== */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--vl-cream) 0%, var(--vl-pink-50) 100%);
+    color: var(--vl-ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============== Typography ============== */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--vl-pink-700);
+    letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+
+p, .text-muted {
+    color: var(--vl-ink-soft);
+    line-height: 1.6;
+}
+
+.lead {
+    color: var(--vl-ink);
+}
+
+/* ============== Navbar — VLearn branding ============== */
+.navbar {
+    background: rgba(255, 250, 243, 0.92) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--vl-pink-200);
+    box-shadow: 0 2px 12px rgba(255, 143, 171, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--vl-pink-700) !important;
+    letter-spacing: 0.02em;
+}
+
+.navbar-brand i {
+    color: var(--vl-pink-500);
+}
+
+.navbar-text {
+    font-size: 0.8rem;
+}
+
+/* ============== Buttons ============== */
+.btn {
+    font-weight: 700;
+    border-radius: var(--vl-radius-md);
+    padding: 0.6rem 1.25rem;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--vl-pink-400), var(--vl-pink-600));
+    border: none;
+    border-bottom: 4px solid var(--vl-pink-700);
+    color: #fff;
+    box-shadow: var(--vl-shadow-soft);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--vl-pink-500), var(--vl-pink-700));
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    color: #fff;
+}
+
+.btn-primary:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+
+.btn-primary:disabled {
+    background: var(--vl-pink-200);
+    border-color: var(--vl-pink-300);
+    box-shadow: none;
+    transform: none;
+}
+
+.btn-outline-secondary {
+    border: 2px solid var(--vl-pink-200);
+    color: var(--vl-pink-700);
+    border-bottom-width: 4px;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--vl-pink-50);
+    border-color: var(--vl-pink-400);
+    color: var(--vl-pink-700);
+}
+
+.btn-success {
+    background: var(--vl-green);
+    border: none;
+    border-bottom: 4px solid var(--vl-green-dark);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background: #4fb502;
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.btn-lg {
+    padding: 0.85rem 1.75rem;
+    font-size: 1.05rem;
+}
+
+/* ============== Cards ============== */
+.card {
+    background: #fff;
+    border-radius: var(--vl-radius-lg);
+    border: 2px solid var(--vl-pink-100);
+    box-shadow: var(--vl-shadow-card);
+    overflow: hidden;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ============== Tags / Badges ============== */
+.badge {
+    font-weight: 700;
+    padding: 0.4em 0.8em;
+    border-radius: 999px;
+}
+
+.badge.bg-primary {
+    background: var(--vl-pink-500) !important;
+}
+
+.badge.bg-secondary {
+    background: var(--vl-pink-100);
+    color: var(--vl-pink-700);
+}
+
+.badge.bg-success {
+    background: var(--vl-green) !important;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3em 0.75em;
+    border-radius: 999px;
+    background: var(--vl-pink-100);
+    color: var(--vl-pink-700);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.tag-green {
+    background: #e6fbd6;
+    color: #3a8a02;
+}
+
+.tag-orange {
+    background: #ffeacc;
+    color: #b86500;
+}
+
+/* ============== List Groups ============== */
+.list-group-item {
+    border-color: var(--vl-pink-100);
+    background: var(--vl-soft-white);
+}
+
+.list-group-item-action:hover {
+    background: var(--vl-pink-50);
+}
+
+.list-group-numbered .list-group-item {
+    align-items: flex-start;
+    background: var(--vl-pink-50);
+    border-radius: var(--vl-radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+/* ============== Progress ============== */
+.progress {
+    background: var(--vl-pink-100);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--vl-pink-400), var(--vl-pink-600));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+/* ============== Form Controls ============== */
+.form-control {
+    border: 2px solid var(--vl-pink-200);
+    border-radius: var(--vl-radius-md);
+    background: var(--vl-pink-50);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.form-control:focus {
+    border-color: var(--vl-pink-500);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 107, 149, 0.2);
+}
+
+/* ============== Animations ============== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 149, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 107, 149, 0);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeInUp 0.35s ease-out;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+/* ============== Footer ============== */
+footer {
+    background: transparent;
+    border-top: 1px solid var(--vl-pink-100);
+}
+
+/* ============== Focus States ============== */
+:focus-visible {
+    outline: 3px solid var(--vl-pink-400);
+    outline-offset: 2px;
+}
+
+.btn:focus-visible {
+    outline: 3px solid var(--vl-pink-400);
+    outline-offset: 2px;
+}
+
+/* ============== Responsive utilities ============== */
+@media (max-width: 768px) {
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-lg {
+        padding: 0.7rem 1.25rem;
+        font-size: 1rem;
+    }
+}

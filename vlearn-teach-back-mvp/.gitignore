@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+
+# .env.example is committed (template only, no secrets)
+
+# Coverage / testing
+.coverage
+htmlcov/
+.tox/
+.cache
+coverage.xml
+
+# Distribution
+build/
+dist/
+*.egg
+
+# Local data (keep structure, ignore generated files)
+*.tmp
+*.bak

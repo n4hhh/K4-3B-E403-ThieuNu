@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Dạy lại · {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Sidebar: Chunks & Progress -->
+    <div class="col-lg-4">
+        <div class="chunks-sidebar">
+            <!-- Lesson Info -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted small mb-2">
+                        <i class="bi bi-book me-1"></i> Bài học
+                    </h2>
+                    <p class="fw-semibold mb-1">{{ lesson.title }}</p>
+                    <p class="small text-muted mb-0">
+                        Tiến độ {{ session.completed_chunk_count }} / {{ session.total_chunk_count }}
+                    </p>
+                    <div class="progress mt-2" style="height: 8px;">
+                        {% set pct = (session.progress_ratio * 100) | int %}
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ pct }}%;"
+                             aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chunks List -->
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted small mb-3">
+                        <i class="bi bi-list-ul me-1"></i> Các phần
+                    </h2>
+                    <div class="chunk-preview">
+                        {% for chunk in lesson.chunks %}
+                            {% set state = session.chunk_states.get(chunk.id) %}
+                            <div class="chunk-row {% if state.value == 'completed' %}done{% elif state.value == 'current' %}current{% else %}locked{% endif %}">
+                                {% if state.value == 'completed' %}
+                                    <div class="check"><i class="bi bi-check"></i></div>
+                                {% else %}
+                                    <div class="num">{{ loop.index }}</div>
+                                {% endif %}
+                                <div class="body">
+                                    <strong>{{ chunk.title }}</strong>
+                                    <span>
+                                        {% if state.value == 'completed' %}
+                                            Hoàn thành
+                                        {% elif state.value == 'current' %}
+                                            Đang học
+                                        {% else %}
+                                            🔒 Chưa mở
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main: Chat Area -->
+    <div class="col-lg-8">
+        <div class="session-shell" id="session-shell">
+            <!-- Session Header with Stepper -->
+            <div class="session-header">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="session-title">
+                        <i class="bi bi-robot"></i>
+                        <span>{{ lesson.title }}</span>
+                    </div>
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-clock me-1"></i>
+                        Phần {{ session.current_chunk_index + 1 }} / {{ session.total_chunk_count }}
+                    </span>
+                </div>
+                
+                <!-- Stepper -->
+                <div class="stepper">
+                    {% for chunk in lesson.chunks %}
+                        {% set state = session.chunk_states.get(chunk.id) %}
+                        {% if loop.index > 1 %}
+                            <div class="step-line {% if state.value == 'completed' %}done{% endif %}"></div>
+                        {% endif %}
+                        <div class="step-dot {% if state.value == 'completed' %}done{% elif state.value == 'current' %}current{% endif %}">
+                            {% if state.value == 'completed' %}
+                                <i class="bi bi-check"></i>
+                            {% else %}
+                                {{ loop.index }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area" id="chat-area">
+                {% for message in session.messages %}
+                    <div class="msg {{ message.author.value }}">
+                        <div class="avatar">
+                            {% if message.author.value == 'agent' %}
+                                🤖
+                            {% else %}
+                                👤
+                            {% endif %}
+                        </div>
+                        <div class="bubble">
+                            {{ message.content }}
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Typing indicator (hidden by default) -->
+                <div class="msg agent" id="typing-indicator" style="display: none;">
+                    <div class="avatar">🤖</div>
+                    <div class="bubble">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hint Chips -->
+            <div class="hint-row" id="hint-row">
+                <button class="hint-chip" onclick="insertHint('Theo bài học thì...')">
+                    <i class="bi bi-lightbulb"></i> Tham khảo bài
+                </button>
+                <button class="hint-chip" onclick="insertHint('Ví dụ: khi...')">
+                    <i class="bi bi-arrow-return-right"></i> Đưa ví dụ
+                </button>
+                <button class="hint-chip" onclick="insertHint('Tóm lại: ...')">
+                    <i class="bi bi-card-text"></i> Tóm tắt
+                </button>
+            </div>
+
+            <!-- Composer -->
+            <div class="composer">
+                <form id="teaching-form"
+                      data-session-id="{{ session.id }}"
+                      data-message-url="/api/teaching-sessions/{{ session.id }}/messages"
+                      data-next-url="/api/teaching-sessions/{{ session.id }}/next"
+                      data-result-url="/session/{{ session.id }}/result">
+                    <div class="composer-input">
+                        <textarea 
+                            class="form-control"
+                            name="content"
+                            id="message-input"
+                            rows="2"
+                            placeholder="Nhập lời giải thích của bạn..."
+                            aria-label="Nhập lời giải thích"
+                            required></textarea>
+                        <button type="submit" class="btn btn-primary" id="send-btn">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="next-chunk-btn" disabled>
+                            <i class="bi bi-arrow-right me-1"></i>
+                            Sang phần tiếp theo
+                        </button>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="btn btn-link btn-sm text-muted">
+                            <i class="bi bi-x-lg me-1"></i> Thoát
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chunk Complete Modal -->
+<div class="modal fade" id="chunkCompleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="mascot-stage mx-auto mb-3" style="width: 100px; height: 100px;">
+                    <span style="font-size: 3rem;">🎉</span>
+                </div>
+                <h4 class="mb-3">Hoàn thành phần!</h4>
+                <p class="text-muted mb-4">Bạn đã giải thích thành công phần này.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Ở lại
+                    </button>
+                    <button type="button" class="btn btn-primary" id="proceed-next-btn">
+                        <i class="bi bi-arrow-right me-1"></i>
+                        Sang phần tiếp theo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lesson Complete Modal -->
+<div class="modal fade" id="lessonCompleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="mascot-stage mx-auto mb-3" style="width: 120px; height: 120px; background: linear-gradient(135deg, #ffd700, #ffa500);">
+                    <span style="font-size: 4rem;">🏆</span>
+                </div>
+                <h3 class="mb-3">Chúc mừng bạn!</h3>
+                <p class="text-muted mb-4">
+                    Bạn đã hoàn thành tất cả {{ session.total_chunk_count }} phần của bài học <strong>{{ lesson.title }}</strong>.
+                </p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('lesson_result', session_id=session.id) }}" class="btn btn-success btn-lg">
+                        <i class="bi bi-trophy me-2"></i>
+                        Xem kết quả
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/teaching.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,27 @@
+/* layout.css — overall page layout */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+}
+
+main.container {
+    max-width: 1140px;
+}
+
+/* Ensure cards look good on mobile */
+@media (max-width: 576px) {
+    main.container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
