@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz · {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card animate-fade-in">
+            <div class="card-body quiz-card">
+                <!-- Quiz Header -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="tag">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>
+                        {{ lesson.title }}
+                    </span>
+                    <span class="tag tag-orange" id="question-counter">
+                        Câu 1 / {{ quiz.questions|length if quiz and quiz.questions else 0 }}
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="quiz-progress">
+                    <div class="quiz-progress-fill" id="quiz-progress-bar" style="width: 0%;"></div>
+                </div>
+
+                {% if quiz and quiz.questions %}
+                    <!-- Question Area -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span style="font-size: 2rem;">🤖</span>
+                            <div>
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    Agent hỏi bạn
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-question" id="quiz-question">
+                            {{ quiz.questions[0].prompt }}
+                        </div>
+
+                        <!-- Answer Options -->
+                        <div id="quiz-options">
+                            {% for option in quiz.questions[0].options %}
+                                <button type="button" class="quiz-option" data-index="{{ loop.index0 }}">
+                                    <span class="option-letter">{{ ['A', 'B', 'C', 'D'][loop.index0] }}.</span>
+                                    {{ option }}
+                                </button>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Feedback Area -->
+                        <div class="quiz-feedback" id="quiz-feedback">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span id="feedback-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="prev-btn" disabled>
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Câu trước
+                        </button>
+                        <button type="button" class="btn btn-primary" id="next-btn" disabled>
+                            Câu tiếp
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- Hidden form for submission -->
+                    <form id="quiz-form" data-quiz-id="{{ quiz.id }}" style="display: none;">
+                        {% for question in quiz.questions %}
+                            <input type="hidden" name="q{{ question.id }}" id="q{{ question.id }}" value="">
+                        {% endfor %}
+                    </form>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-emoji-frown"></i>
+                        <p>Chưa có câu hỏi quiz cho bài học này.</p>
+                        <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Quay lại bài học
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="text-center mt-3">
+            <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại bài học
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inject quiz data for JavaScript
+    window.__QUIZ_DATA__ = {{ quiz.model_dump_json() if quiz else '{}'|safe }};
+</script>
+<script src="{{ url_for('static', path='js/quiz.js') }}"></script>
+{% endblock %}

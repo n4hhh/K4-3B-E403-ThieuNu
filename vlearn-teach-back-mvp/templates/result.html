@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Kết quả · {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card animate-fade-in">
+            <!-- Celebration Header -->
+            <div class="celebrate" style="padding: 2rem;">
+                <div class="mascot-stage mx-auto mb-3" style="width: 120px; height: 120px;">
+                    <span style="font-size: 4rem;">🏆</span>
+                </div>
+                <h1>
+                    <i class="bi bi-trophy-fill text-warning me-2"></i>
+                    Hoàn thành bài học!
+                </h1>
+                <p class="lead">
+                    Bạn đã dạy lại thành công <strong>{{ lesson.title }}</strong>
+                </p>
+                <div class="xp-badge">
+                    <i class="bi bi-star-fill"></i>
+                    +{{ session.completed_chunk_count * 25 }} XP
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="px-4 pb-4">
+                <div class="summary-grid">
+                    <div class="stat-card">
+                        <div class="num">{{ session.completed_chunk_count }}</div>
+                        <div class="label">Phần hoàn thành</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="num">
+                            {% set total_attempts = namespace(total=0) %}
+                            {% for cid, attempts in session.attempts_per_chunk.items() %}
+                                {% set total_attempts.total = total_attempts.total + attempts %}
+                            {% endfor %}
+                            {{ total_attempts.total }}
+                        </div>
+                        <div class="label">Lần tương tác</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="num">{{ session.total_chunk_count }}/{{ session.total_chunk_count }}</div>
+                        <div class="label">Tiêu chí đạt</div>
+                    </div>
+                </div>
+
+                <!-- Chunk Details -->
+                <h2 class="h5 mt-4 mb-3">
+                    <i class="bi bi-list-check me-2"></i>
+                    Chi tiết từng phần
+                </h2>
+                <div class="chunk-preview">
+                    {% for chunk in lesson.chunks %}
+                        {% set state = session.chunk_states.get(chunk.id) %}
+                        <div class="chunk-row {% if state.value == 'completed' %}done{% endif %}">
+                            <div class="check">
+                                {% if state.value == 'completed' %}
+                                    <i class="bi bi-check"></i>
+                                {% endif %}
+                            </div>
+                            <div class="body">
+                                <strong>{{ loop.index }}. {{ chunk.title }}</strong>
+                                <span>
+                                    {% if chunk.id in session.attempts_per_chunk %}
+                                        {{ session.attempts_per_chunk[chunk.id] }} lần tương tác
+                                    {% else %}
+                                        Hoàn thành
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <span class="mascot-icon">✅</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="d-flex flex-wrap gap-3 justify-content-center mt-4">
+                    <a href="{{ url_for('quiz', lesson_id=lesson.id) }}"
+                       class="btn btn-success btn-lg">
+                        <i class="bi bi-patch-question me-2"></i>
+                        Làm Quiz
+                    </a>
+                    <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Về bài học
+                    </a>
+                </div>
+
+                <p class="text-center text-muted small mt-4 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Tiếp tục với quiz để kiểm tra kiến thức của bạn một cách độc lập.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/result.js') }}"></script>
+{% endblock %}

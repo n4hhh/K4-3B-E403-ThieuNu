@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{{ selected.title if selected else "Bài học" }} · VLearn{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    {% if selected %}
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card animate-fade-in">
+                <div class="card-body">
+                    <!-- Lesson Header -->
+                    <div class="lesson-header">
+                        <div class="lesson-cover">
+                            <i class="bi bi-lightning-charge-fill"></i>
+                        </div>
+                        <div>
+                            <span class="tag">{{ selected.title }}</span>
+                            <h1 class="mb-2 mt-2">
+                                <i class="bi bi-lightbulb-fill text-warning me-2"></i>
+                                {{ selected.title }}
+                            </h1>
+                            <div class="lesson-meta">
+                                <span class="tag tag-green">
+                                    <i class="bi bi-clock"></i> {{ selected.duration_minutes }} phút
+                                </span>
+                                <span class="tag tag-orange">
+                                    <i class="bi bi-stack"></i> {{ selected.chunks|length }} phần
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="lead mt-4">{{ selected.summary }}</p>
+                    <p>{{ selected.description }}</p>
+
+                    <!-- Objectives -->
+                    <h2 class="h5 mt-4 mb-3">
+                        <i class="bi bi-bullseye text-primary me-2"></i>
+                        Mục tiêu học tập
+                    </h2>
+                    <ul class="list-group mb-4">
+                        {% for chunk in selected.chunks %}
+                            <li class="list-group-item d-flex align-items-start">
+                                <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                                <div>
+                                    <strong>{{ chunk.title }}</strong>
+                                    <div class="small text-muted">{{ chunk.description }}</div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <!-- Transcript Preview -->
+                    {% if selected.transcript %}
+                    <h2 class="h5 mb-3">
+                        <i class="bi bi-card-text text-primary me-2"></i>
+                        Tóm tắt nội dung
+                    </h2>
+                    <div class="p-3 rounded" style="background: var(--vl-pink-50); border: 2px dashed var(--vl-pink-200);">
+                        <p class="mb-0">{{ selected.transcript }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- CTAs -->
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <a href="{{ url_for('session_intro', lesson_id=selected.id) }}"
+                           class="btn btn-primary btn-lg">
+                            <i class="bi bi-chat-quote me-2"></i>
+                            Dạy lại cho Agent
+                        </a>
+                        <a href="{{ url_for('quiz', lesson_id=selected.id) }}"
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-patch-question me-1"></i>
+                            Làm Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Progress Card -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3 class="h6 text-uppercase text-muted small mb-3">
+                        <i class="bi bi-graph-up me-1"></i> Tiến độ học
+                    </h3>
+                    <p class="mb-2">
+                        <strong>{{ selected.chunks|length }}</strong> phần cần hoàn thành
+                    </p>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: 0%;"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">Bắt đầu bằng cách dạy lại cho Agent</p>
+                </div>
+            </div>
+
+            <!-- Chunks Overview -->
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h6 text-uppercase text-muted small mb-3">
+                        <i class="bi bi-list-ul me-1"></i> Các phần trong bài
+                    </h3>
+                    <div class="chunk-preview">
+                        {% for chunk in selected.chunks %}
+                            <div class="chunk-row">
+                                <div class="num">{{ loop.index }}</div>
+                                <div class="body">
+                                    <strong>{{ chunk.title }}</strong>
+                                    <span>{{ chunk.key_points|length }} điểm chính</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Lesson List -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="h3 mb-4">
+                        <i class="bi bi-book me-2"></i> Chọn bài học
+                    </h1>
+                    <div class="row g-3">
+                        {% for lesson in lessons %}
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}"
+                                   class="text-decoration-none">
+                                    <div class="card h-100" style="transition: transform 0.2s, box-shadow 0.2s;">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="lesson-cover" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                                                    <i class="bi bi-lightning-charge-fill"></i>
+                                                </div>
+                                                <div class="ms-3">
+                                                    <h3 class="h6 mb-0">{{ lesson.title }}</h3>
+                                                    <small class="text-muted">{{ lesson.duration_minutes }} phút</small>
+                                                </div>
+                                            </div>
+                                            <p class="small text-muted mb-3">{{ lesson.summary }}</p>
+                                            <span class="tag">
+                                                <i class="bi bi-stack"></i> {{ lesson.chunks|length }} phần
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <div class="empty-state">
+                                    <i class="bi bi-emoji-frown"></i>
+                                    <p>Không có bài học nào được tìm thấy.</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
