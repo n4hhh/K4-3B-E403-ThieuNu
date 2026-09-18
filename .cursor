@@ -1,0 +1,677 @@
+Đúng. Với cách bạn vừa уточ lại, **đơn vị tương tác không nên là một concept đơn lẻ**, mà là **một Lesson Session**. Học viên dạy Agent **toàn bộ một bài học**, nhưng bài học được chia thành nhiều **Teaching Loop / đoạn chat**. Mỗi loop xử lý một knowledge chunk; chỉ khi toàn bộ các chunk đạt quality bar thì session mới được coi là hoàn thành.
+
+Tôi đề xuất mô hình:
+
+> **1 Lesson = 1 Teaching Session = N Teaching Loops = 1 Learning Result**
+
+---
+
+# 1. Domain/User Flow mới
+
+```text
+                         VLEARN
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │   Chọn bài học  │
+                  │    Lesson A     │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Xem bài học     │
+                  │ 1–3 phút        │
+                  └────────┬────────┘
+                           │
+                           ▼
+              ┌─────────────────────────┐
+              │    "Dạy lại cho Agent"  │
+              └────────────┬────────────┘
+                           │
+                           ▼
+              ╔═════════════════════════╗
+              ║     TEACHING SESSION    ║
+              ║     Lesson A             ║
+              ╚════════════╤════════════╝
+                           │
+                           ▼
+              ┌─────────────────────────┐
+              │ Agent chia bài học      │
+              │ thành Knowledge Chunks   │
+              └────────────┬────────────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Chunk 1    │
+                    └──────┬───────┘
+                           │
+                           ▼
+                ╔══════════════════════╗
+                ║    TEACHING LOOP    ║
+                ║                     ║
+                ║ Student explains    ║
+                ║        ↓            ║
+                ║ Agent validates     ║
+                ║        ↓            ║
+                ║ Gap? ── YES ─────┐  ║
+                ║                  │  ║
+                ║ Student clarifies│  ║
+                ║        ↑         │  ║
+                ║        └─────────┘  ║
+                ║                     ║
+                ║        ↓            ║
+                ║     Chunk PASS      ║
+                ╚══════════╤══════════╝
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Chunk 2    │
+                    └──────┬───────┘
+                           │
+                           ▼
+                       LOOP ...
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Chunk N    │
+                    └──────┬───────┘
+                           │
+                           ▼
+                 ┌─────────────────────┐
+                 │ ALL CHUNKS PASSED?  │
+                 └──────────┬──────────┘
+                            │ YES
+                            ▼
+                 ┌─────────────────────┐
+                 │  LESSON UNDERSTOOD  │
+                 │                     │
+                 │ Learning Result     │
+                 └──────────┬──────────┘
+                            │
+                            ▼
+                      [Continue Quiz]
+```
+
+---
+
+# 2. Cấu trúc dữ liệu nên hiểu như thế này
+
+Đây là abstraction quan trọng nhất của sản phẩm:
+
+```text
+Lesson
+│
+├── Lesson metadata
+│
+├── Knowledge Chunk 1
+│   ├── Key point A
+│   ├── Key point B
+│   └── Quality criteria
+│
+├── Knowledge Chunk 2
+│   ├── Key point A
+│   ├── Key point B
+│   └── Quality criteria
+│
+├── Knowledge Chunk 3
+│   └── ...
+│
+└── Knowledge Chunk N
+```
+
+Sau đó:
+
+```text
+Lesson
+   │
+   ▼
+Teaching Session
+   │
+   ├── Loop 1 → Chunk 1 → PASS
+   │
+   ├── Loop 2 → Chunk 2 → PASS
+   │
+   ├── Loop 3 → Chunk 3 → PASS
+   │
+   └── Loop N → Chunk N → PASS
+   │
+   ▼
+Lesson Complete
+```
+
+Điều này cũng giải quyết vấn đề **chat quá dài**.
+
+Mỗi chunk có thể được xem như **một đoạn chat/mini-session**, nhưng tất cả cùng thuộc một Lesson Session.
+
+---
+
+# 3. Teaching Loop chi tiết
+
+Đây mới là **core AI loop** của D3.
+
+```text
+                  ┌─────────────────────┐
+                  │ Current Chunk       │
+                  │ "Dependency"        │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Agent asks student  │
+                  │ to teach            │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Student explains    │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Validator compares  │
+                  │                     │
+                  │ Explanation         │
+                  │        VS           │
+                  │ Source knowledge    │
+                  └──────────┬──────────┘
+                             │
+                    ┌────────┴────────┐
+                    │                 │
+                 GAP/ERROR          SUFFICIENT
+                    │                 │
+                    ▼                 ▼
+          ┌──────────────────┐  ┌───────────────┐
+          │ Agent asks       │  │ Chunk PASS    │
+          │ targeted         │  │               │
+          │ question         │  └───────┬───────┘
+          └────────┬─────────┘          │
+                   │                    │
+                   ▼                    │
+          ┌──────────────────┐          │
+          │ Student answers  │          │
+          │ / explains again │          │
+          └────────┬─────────┘          │
+                   │                    │
+                   └──────────┐         │
+                              ▼         │
+                        Re-validation  │
+                              │         │
+                              └─────────┘
+```
+
+### Quy tắc
+
+Agent **không được**:
+
+```text
+❌ Gợi ý đáp án
+❌ Tự sửa câu trả lời cho student
+❌ Nói "đúng rồi" khi còn missing key point
+❌ Chuyển chunk khi explanation chưa đạt
+```
+
+Agent **được**:
+
+```text
+✓ Hỏi "Why?"
+✓ Hỏi "How?"
+✓ Hỏi clarification
+✓ Yêu cầu example
+✓ Trỏ về source section
+✓ Re-check explanation
+```
+
+---
+
+# 4. Lesson-level state machine
+
+Để BA/spec rõ ràng hơn, nên có state:
+
+```text
+                    ┌───────────────┐
+                    │ NOT_STARTED   │
+                    └───────┬───────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │ IN_PROGRESS   │
+                    └───────┬───────┘
+                            │
+                            ▼
+                    ┌──────────────────┐
+                    │ TEACHING_CHUNK   │
+                    └────────┬─────────┘
+                             │
+                  ┌──────────┴──────────┐
+                  │                     │
+               GAP FOUND             PASS
+                  │                     │
+                  ▼                     ▼
+           ASK_CLARIFICATION      NEXT_CHUNK
+                  │                     │
+                  └──────►              │
+                           │             │
+                           └─────────────┘
+                                         │
+                              All chunks passed
+                                         │
+                                         ▼
+                                ┌────────────────┐
+                                │    COMPLETED   │
+                                └───────┬────────┘
+                                        │
+                                        ▼
+                                     QUIZ
+```
+
+---
+
+# 5. Một Lesson có thể trông như thế nào?
+
+Ví dụ bài:
+
+> **"Introduction to REST API"**
+
+Agent tự chia:
+
+```text
+LESSON
+│
+├── Chunk 1
+│   What is REST API?
+│
+├── Chunk 2
+│   Client – Server
+│
+├── Chunk 3
+│   HTTP Methods
+│
+├── Chunk 4
+│   HTTP Status Codes
+│
+└── Chunk 5
+    Stateless principle
+```
+
+UI:
+
+```text
+DẠY LẠI CHO AGENT
+────────────────────────────────
+
+REST API
+5 phần
+
+✓ 1. REST API              Complete
+✓ 2. Client – Server       Complete
+● 3. HTTP Methods          Current
+○ 4. HTTP Status Codes     Locked
+○ 5. Stateless            Locked
+
+Progress: ███████░░░ 60%
+```
+
+Tôi khuyến nghị **không cho học viên tự chọn chunk tiếp theo trong MVP**. Agent tuần tự đi qua lesson structure để tránh bỏ qua knowledge gap.
+
+---
+
+# 6. Feature Tree Level 1
+
+Từ user flow trên, Feature Tree nên bắt đầu như sau:
+
+```text
+D · VLEARN — TEACH BACK AGENT
+│
+├── 1. Lesson Integration
+│   ├── Lesson selection
+│   ├── Lesson content
+│   ├── Transcript
+│   └── Learning objectives
+│
+├── 2. Teaching Session
+│   ├── Start session
+│   ├── Session state
+│   ├── Progress
+│   ├── Current chunk
+│   └── Session history
+│
+├── 3. Knowledge Chunking
+│   ├── Identify concepts
+│   ├── Split lesson
+│   ├── Key points
+│   └── Quality criteria
+│
+├── 4. Teaching Loop
+│   ├── Agent asks
+│   ├── Student explains
+│   ├── Agent listens
+│   ├── Detect gap
+│   ├── Ask back
+│   ├── Re-explain
+│   └── Re-validate
+│
+├── 5. Knowledge Validation
+│   ├── Transcript comparison
+│   ├── Key-point coverage
+│   ├── Accuracy check
+│   ├── Example check
+│   └── Quality gate
+│
+├── 6. Learning Result
+│   ├── Completed chunks
+│   ├── Detected gaps
+│   ├── Number of attempts
+│   ├── Final explanation
+│   └── Session summary
+│
+└── 7. Continue Learning
+    ├── Continue to quiz
+    ├── Return to lesson
+    └── Review weak chunks
+```
+
+---
+
+# 7. Feature Tree Level 2 — Core MVP
+
+Nếu đi sâu một level, tôi sẽ ưu tiên như sau:
+
+```text
+D · VLEARN
+│
+├── Lesson Integration
+│   ├── Get current lesson
+│   ├── Get transcript
+│   └── Get learning objectives
+│
+├── Teaching Session
+│   ├── Create session
+│   ├── Resume session
+│   ├── Track progress
+│   └── Complete session
+│
+├── Knowledge Chunking
+│   ├── Extract concepts
+│   ├── Create chunks
+│   ├── Define required knowledge
+│   └── Define quality bar
+│
+├── Teaching Loop ★ CORE
+│   ├── Prompt student
+│   ├── Receive explanation
+│   ├── Analyze explanation
+│   ├── Detect knowledge gap
+│   ├── Generate targeted question
+│   ├── Receive clarification
+│   └── Re-evaluate
+│
+├── Validation
+│   ├── Source grounding
+│   ├── Accuracy
+│   ├── Completeness
+│   └── Pass / Retry
+│
+├── Progress
+│   ├── Chunk status
+│   ├── Loop count
+│   └── Overall progress
+│
+└── Result
+    ├── Learning summary
+    ├── Weak points
+    └── Continue to quiz
+```
+
+**★ Teaching Loop là feature trung tâm**, không phải Chat UI.
+
+---
+
+# 8. Screen Flow
+
+Tôi đề xuất MVP có khoảng **7 màn hình chính**.
+
+```text
+┌────────────────────┐
+│ 1. Lesson Detail   │
+│                    │
+│ REST API           │
+│ Transcript         │
+│ [Dạy lại cho Agent]│
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ 2. Session Intro   │
+│                    │
+│ Bạn sẽ dạy lại     │
+│ 5 phần của bài     │
+│                    │
+│ [Bắt đầu]          │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────────────────┐
+│ 3. Teaching Session            │
+│                                │
+│ Progress 2/5                   │
+│                                │
+│ 🤖 Agent                       │
+│ "Hãy giải thích..."            │
+│                                │
+│ 👤 Student                     │
+│ [Explanation input]            │
+│                                │
+│ [Send]                         │
+└───────────────┬────────────────┘
+                │
+                ▼
+       ┌─────────────────┐
+       │ 4. Agent Follow │
+       │    Up Question  │
+       │                 │
+       │ "Tôi chưa hiểu  │
+       │  tại sao..."    │
+       │                 │
+       │ [Answer]        │
+       └────────┬────────┘
+                │
+                │ loop
+                └───────────────► Screen 3
+                                   │
+                                   │ PASS
+                                   ▼
+                         ┌────────────────────┐
+                         │ 5. Chunk Complete  │
+                         │                    │
+                         │ ✓ HTTP Methods     │
+                         │                    │
+                         │ [Next Part]       │
+                         └─────────┬──────────┘
+                                   │
+                                   ▼
+                              Screen 3
+                              Chunk N
+                                   │
+                            All chunks PASS
+                                   │
+                                   ▼
+                         ┌────────────────────┐
+                         │ 6. Lesson Complete │
+                         │                    │
+                         │ ✓ 5/5 parts        │
+                         │                    │
+                         │ Learning Result    │
+                         │                    │
+                         │ [Continue Quiz]    │
+                         └─────────┬──────────┘
+                                   │
+                                   ▼
+                         ┌────────────────────┐
+                         │ 7. Quiz            │
+                         │                    │
+                         │ VLearn Quiz        │
+                         └────────────────────┘
+```
+
+---
+
+# 9. Screen 3 và Screen 4 thực ra có thể là **một màn hình**
+
+Đây là lựa chọn UX tôi khuyến nghị cho MVP.
+
+Không cần:
+
+```text
+Screen 3 → Screen 4 → Screen 3 → Screen 4
+```
+
+vì sẽ tạo cảm giác như wizard.
+
+Thay vào đó:
+
+```text
+              TEACHING SESSION
+─────────────────────────────────────
+Lesson: REST API
+
+Progress
+✓ 1    ✓ 2    ● 3    ○ 4    ○ 5
+
+
+🤖 Agent
+Hãy giải thích HTTP Methods cho tôi.
+
+
+👤 You
+HTTP Methods dùng để...
+
+
+🤖 Agent
+Tôi chưa rõ một điểm:
+POST và PUT khác nhau ở đâu?
+
+
+👤 You
+POST thường dùng để...
+
+
+🤖 Agent
+Đã rõ. Tôi muốn hỏi thêm...
+
+
+👤 You
+...
+
+
+─────────────────────────────────────
+[ Type your explanation... ]
+
+                              [Send]
+```
+
+**Mỗi message là một interaction loop**, còn **mỗi chunk là một mini-session bên trong Lesson Session**.
+
+---
+
+# 10. Screen Flow chuẩn để đưa vào Figma
+
+Bạn có thể đặt tên frame:
+
+```text
+SF-01  Lesson Detail
+   ↓
+SF-02  Teach Back Introduction
+   ↓
+SF-03  Teaching Session
+   │
+   ├──── Loop: Student Explanation
+   │
+   ├──── Loop: Agent Follow-up
+   │
+   ├──── Loop: Student Clarification
+   │
+   └──── Loop: Validation
+   │
+   ├── PASS ──► SF-04 Chunk Complete
+   │                │
+   │                ▼
+   │          Next Chunk
+   │                │
+   │                └────► SF-03
+   │
+   └── FAIL ──► SF-03
+                    │
+                    ▼
+                 retry
+                    │
+                    ▼
+             All Chunks PASS
+                    │
+                    ▼
+             SF-05 Lesson Result
+                    │
+                    ▼
+             SF-06 VLearn Quiz
+```
+
+---
+
+# 11. Quan trọng nhất: 3 tầng loop
+
+Sau khi chỉnh yêu cầu của bạn, sản phẩm thực chất có **3 tầng loop**:
+
+```text
+                    LESSON
+                       │
+             ┌─────────┴─────────┐
+             │                   │
+          CHUNK 1             CHUNK 2 ...
+             │
+             ▼
+      ┌─────────────────┐
+      │ TEACHING LOOP   │
+      │                 │
+      │ Explain         │
+      │   ↓             │
+      │ Validate        │
+      │   ↓             │
+      │ Gap?            │
+      │  ↓ YES          │
+      │ Ask             │
+      │   ↓             │
+      │ Re-explain      │
+      │   ↓             │
+      │ Validate        │
+      └────────┬────────┘
+               │ PASS
+               ▼
+          NEXT CHUNK
+               │
+               ▼
+          ...
+               │
+               ▼
+        ALL CHUNKS PASS
+               │
+               ▼
+         LESSON COMPLETE
+               │
+               ▼
+              QUIZ
+```
+
+### Tóm lại
+
+**Level 1 — Lesson Loop**
+
+> Học bài → dạy lại từng phần → hoàn thành toàn bài.
+
+**Level 2 — Chunk Loop**
+
+> Chunk hiện tại → giải thích → validate → pass/retry.
+
+**Level 3 — Conversation Loop**
+
+> Agent hỏi → Student trả lời → Agent phát hiện gap → hỏi tiếp → Student sửa → validate.
+
+Đây là cấu trúc tôi cho rằng phù hợp nhất với đề D3 của bạn, vì **"Dạy lại cho Agent" trở thành một learning workflow có trạng thái và quality gate**, thay vì một chatbot conversation kéo dài.

@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VLearn — Teach Back Agent (Mockup)</title>
+<style>
+  /* ============== Theme: Hồng phấn + Duolingo vibe ============== */
+  :root {
+    --pink-50: #fff5f7;
+    --pink-100: #ffe4ec;
+    --pink-200: #ffc9d9;
+    --pink-300: #ffb3c8;
+    --pink-400: #ff8fab;
+    --pink-500: #ff6b95;
+    --pink-600: #e84d7f;
+    --pink-700: #c83768;
+    --cream: #fffaf3;
+    --soft-white: #fff9fb;
+    --ink: #3b1f2b;
+    --ink-soft: #6b4a59;
+    --green: #58cc02;
+    --green-dark: #4bae02;
+    --orange: #ff9600;
+    --red: #ff4b4b;
+    --shadow-soft: 0 6px 0 rgba(199, 55, 104, 0.18);
+    --shadow-card: 0 8px 24px rgba(255, 143, 171, 0.18);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%, var(--pink-100) 0%, transparent 40%),
+      radial-gradient(circle at 90% 100%, var(--pink-200) 0%, transparent 40%),
+      var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============== Top Bar ============== */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255, 250, 243, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--pink-200);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 20px;
+    color: var(--pink-700);
+  }
+  .brand-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--pink-400), var(--pink-600));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    color: #fff; font-size: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+  .nav-pills {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    background: var(--pink-100);
+    padding: 6px;
+    border-radius: 999px;
+  }
+  .nav-pill {
+    background: transparent;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--pink-700);
+    transition: all .2s;
+  }
+  .nav-pill:hover { background: var(--pink-200); }
+  .nav-pill.active {
+    background: var(--pink-500);
+    color: #fff;
+    box-shadow: var(--shadow-soft);
+  }
+  .nav-pill .num {
+    display: inline-block; width: 20px; height: 20px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 50%;
+    text-align: center; line-height: 20px;
+    font-size: 11px; margin-right: 6px;
+  }
+  .nav-pill.active .num { background: rgba(255,255,255,0.3); }
+
+  /* ============== Screen container ============== */
+  .stage { max-width: 1100px; margin: 0 auto; padding: 28px; }
+  .screen { display: none; animation: fadeIn .35s ease-out; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============== Common cards ============== */
+  .card {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--pink-100);
+    box-shadow: var(--shadow-card);
+    padding: 24px;
+  }
+  .btn {
+    background: var(--pink-500);
+    color: #fff;
+    border: none;
+    border-bottom: 4px solid var(--pink-700);
+    border-radius: var(--radius-md);
+    padding: 14px 24px;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform .08s, filter .15s;
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { filter: brightness(1.05); }
+  .btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+  .btn.secondary {
+    background: #fff;
+    color: var(--pink-700);
+    border: 2px solid var(--pink-200);
+    border-bottom: 4px solid var(--pink-200);
+  }
+  .btn.success {
+    background: var(--green);
+    border-bottom-color: var(--green-dark);
+  }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--pink-100);
+    color: var(--pink-700);
+    font-size: 12px; font-weight: 700;
+  }
+  .tag.green { background: #e6fbd6; color: #3a8a02; }
+  .tag.orange { background: #ffeacc; color: #b86500; }
+
+  h1 { font-size: 28px; color: var(--pink-700); margin-bottom: 6px; }
+  h2 { font-size: 20px; color: var(--pink-700); margin-bottom: 12px; }
+  h3 { font-size: 16px; color: var(--ink); margin-bottom: 8px; }
+  p { color: var(--ink-soft); line-height: 1.55; }
+
+  /* ============== Mascot ============== */
+  .mascot {
+    width: 80px; height: 80px;
+    display: inline-block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 8px rgba(199,55,104,0.25));
+  }
+  .mascot.lg { width: 140px; height: 140px; }
+  .mascot.xl { width: 180px; height: 180px; }
+  .mascot.float { animation: floatY 3s ease-in-out infinite; }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+  .mascot.tilt-l { transform: rotate(-8deg); }
+  .mascot.tilt-r { transform: rotate(8deg); }
+  .mascot-wrap {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .mascot-stage {
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--pink-100), var(--pink-200));
+    border-radius: 50%;
+    width: 120px; height: 120px;
+    margin: 0 auto 14px;
+    box-shadow: var(--shadow-soft);
+  }
+  .mascot-bubble {
+    position: relative;
+    background: #fff;
+    border: 2px solid var(--pink-200);
+    border-radius: 18px;
+    padding: 6px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mascot-bubble::after {
+    content: '';
+    position: absolute;
+    left: 16px; bottom: -8px;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-right: 2px solid var(--pink-200);
+    border-bottom: 2px solid var(--pink-200);
+    transform: rotate(45deg);
+  }
+  .mascot-tiny {
+    width: 32px; height: 32px;
+    vertical-align: middle;
+  }
+
+  /* ============== SF-01 Lesson Detail ============== */
+  .lesson-header {
+    display: flex; align-items: center; gap: 18px;
+    margin-bottom: 20px;
+  }
+  .lesson-cover {
+    width: 92px; height: 92px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, var(--pink-300), var(--pink-500));
+    display: grid; place-items: center;
+    color: #fff; font-size: 40px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .lesson-cover .mascot { width: 78px; height: 78px; }
+  .lesson-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+  .objectives { margin-top: 16px; }
+  .objectives li {
+    list-style: none;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--pink-50);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .objectives li::before {
+    content: '🎯';
+    font-size: 16px;
+  }
+
+  .transcript-block {
+    background: var(--cream);
+    border: 2px dashed var(--pink-200);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    max-height: 220px;
+    overflow-y: auto;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .transcript-block p + p { margin-top: 10px; }
+
+  /* ============== SF-02 Teach Back Intro ============== */
+  .intro-hero {
+    text-align: center;
+    padding: 40px 24px 28px;
+  }
+  .big-emoji {
+    margin-bottom: 14px;
+    display: inline-block;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  .big-emoji .mascot { width: 140px; height: 140px; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .intro-hero h1 { font-size: 32px; }
+  .intro-hero p { max-width: 540px; margin: 12px auto 0; }
+
+  .chunk-preview {
+    margin: 24px auto 0;
+    max-width: 480px;
+  }
+  .chunk-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: var(--pink-50);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    border: 2px solid transparent;
+    transition: all .2s;
+  }
+  .chunk-row.locked { opacity: 0.5; }
+  .chunk-row.current { border-color: var(--pink-400); background: #fff; box-shadow: var(--shadow-card); }
+  .chunk-row.done .check {
+    background: var(--green);
+    color: #fff;
+  }
+  .chunk-row .check {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--pink-200);
+    color: var(--pink-700);
+    display: grid; place-items: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .chunk-row .num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--pink-200);
+    color: var(--pink-700);
+    display: grid; place-items: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .chunk-row .body { flex: 1; }
+  .chunk-row .body strong { display: block; color: var(--ink); }
+  .chunk-row .body span { font-size: 12px; color: var(--ink-soft); }
+
+  /* ============== SF-03 Teaching Session ============== */
+  .session-shell {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--pink-100);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .session-header {
+    padding: 18px 24px;
+    background: linear-gradient(135deg, var(--pink-100), var(--pink-200));
+    border-bottom: 2px solid var(--pink-200);
+  }
+  .session-title-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .session-title { font-size: 18px; font-weight: 800; color: var(--pink-700); }
+
+  .stepper {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 8px;
+  }
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--pink-300);
+    color: var(--pink-700);
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 12px;
+  }
+  .step-dot.done { background: var(--green); border-color: var(--green-dark); color: #fff; }
+  .step-dot.current {
+    background: var(--pink-500);
+    border-color: var(--pink-700);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(255,107,149,0.25);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 4px rgba(255,107,149,0.25); }
+    50% { box-shadow: 0 0 0 8px rgba(255,107,149,0.1); }
+  }
+  .step-line {
+    flex: 1; height: 2px;
+    background: var(--pink-200);
+    border-radius: 2px;
+  }
+  .step-line.done { background: var(--green); }
+
+  .chat-area {
+    padding: 24px;
+    background: var(--soft-white);
+    min-height: 380px;
+    max-height: 460px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .msg {
+    display: flex; gap: 12px;
+    max-width: 88%;
+    animation: slideUp .3s ease-out;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.agent { align-self: flex-start; }
+  .msg.user  { align-self: flex-end; flex-direction: row-reverse; }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--pink-100), var(--pink-200));
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(199,55,104,0.15);
+  }
+  .msg.agent .avatar { background: linear-gradient(135deg, #fff, var(--pink-100)); border: 2px solid var(--pink-300); }
+  .msg.user  .avatar { background: linear-gradient(135deg, var(--pink-200), var(--pink-400)); border: 2px solid var(--pink-500); }
+  .avatar .mascot { width: 40px; height: 40px; filter: none; }
+  .bubble {
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: #fff;
+    border: 2px solid var(--pink-100);
+    line-height: 1.5;
+    font-size: 14px;
+    color: var(--ink);
+    box-shadow: 0 2px 6px rgba(255,143,171,0.08);
+  }
+  .msg.agent .bubble {
+    border-bottom-left-radius: 4px;
+    background: #fff;
+  }
+  .msg.user .bubble {
+    background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+    color: #fff;
+    border-color: var(--pink-700);
+    border-bottom-right-radius: 4px;
+  }
+  .bubble strong { color: var(--pink-700); }
+  .msg.user .bubble strong { color: #ffe4ec; }
+
+  .gap-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #fff5e6;
+    color: #b86500;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--orange);
+  }
+
+  .composer {
+    padding: 16px 24px;
+    background: #fff;
+    border-top: 2px solid var(--pink-100);
+    display: flex; gap: 12px; align-items: flex-end;
+  }
+  .composer textarea {
+    flex: 1;
+    border: 2px solid var(--pink-200);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: none;
+    min-height: 48px;
+    max-height: 120px;
+    background: var(--pink-50);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .composer textarea:focus { border-color: var(--pink-500); background: #fff; }
+
+  .hint-row {
+    padding: 0 24px 12px;
+    background: #fff;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .hint-chip {
+    background: var(--pink-100);
+    color: var(--pink-700);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hint-chip:hover { background: var(--pink-200); }
+
+  /* ============== SF-04 Chunk Complete ============== */
+  .celebrate {
+    text-align: center;
+    padding: 40px 24px;
+  }
+  .confetti {
+    font-size: 64px;
+    display: inline-block;
+    animation: spin 1.4s ease-out;
+  }
+  @keyframes spin {
+    from { transform: rotate(0) scale(0.5); opacity: 0; }
+    to { transform: rotate(360deg) scale(1); opacity: 1; }
+  }
+  .celebrate h1 { font-size: 30px; margin-top: 12px; }
+  .xp-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: 800;
+    margin: 16px 0;
+    box-shadow: 0 4px 0 #b86500;
+  }
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin: 24px 0;
+  }
+  .stat-card {
+    background: var(--pink-50);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 28px; font-weight: 800; color: var(--pink-700);
+  }
+  .stat-card .label {
+    font-size: 12px; color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* ============== SF-05 Lesson Result ============== */
+  .result-grid {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 18px;
+    margin-top: 18px;
+  }
+  @media (max-width: 720px) {
+    .result-grid { grid-template-columns: 1fr; }
+  }
+  .chunk-list .chunk-row { background: var(--pink-50); }
+  .chunk-list .chunk-row.weak { background: #fff0f3; border-color: var(--pink-300); }
+
+  .result-side .stat-card + .stat-card { margin-top: 12px; }
+
+  /* ============== SF-06 Quiz ============== */
+  .quiz-card {
+    max-width: 640px; margin: 0 auto;
+  }
+  .quiz-progress {
+    height: 8px; background: var(--pink-100);
+    border-radius: 999px; margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink-400), var(--pink-600));
+    border-radius: 999px;
+    transition: width .4s;
+  }
+  .quiz-question {
+    font-size: 22px; font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 20px;
+    line-height: 1.35;
+  }
+  .quiz-option {
+    display: block; width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 2px solid var(--pink-200);
+    border-bottom-width: 4px;
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all .15s;
+  }
+  .quiz-option:hover { background: var(--pink-50); border-color: var(--pink-400); }
+  .quiz-option.selected {
+    background: var(--pink-100);
+    border-color: var(--pink-500);
+    color: var(--pink-700);
+  }
+  .quiz-option.correct {
+    background: #e6fbd6;
+    border-color: var(--green);
+    color: #2e7a02;
+  }
+  .quiz-option.wrong {
+    background: #ffe0e6;
+    border-color: var(--red);
+    color: #b30000;
+  }
+  .quiz-feedback {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--pink-50);
+    border-left: 4px solid var(--pink-500);
+    font-size: 14px;
+    color: var(--ink);
+    display: none;
+  }
+  .quiz-feedback.show { display: block; animation: slideUp .3s; }
+
+  /* ============== Side Note ============== */
+  .stage-meta {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 12px;
+    margin-top: 16px;
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== MASCOT LIBRARY (SVG inline) ============== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- ============ PEPPA PIG ============ -->
+    <symbol id="mascot-peppa" viewBox="0 0 200 200">
+      <!-- shadow -->
+      <ellipse cx="100" cy="185" rx="55" ry="6" fill="rgba(199,55,104,0.18)"/>
+      <!-- body / red dress -->
+      <ellipse cx="100" cy="150" rx="55" ry="35" fill="#ff4d6d"/>
+      <!-- dress darker -->
+      <path d="M55 150 Q100 165 145 150 L145 175 Q100 185 55 175 Z" fill="#e63a5c"/>
+      <!-- arms -->
+      <ellipse cx="55" cy="135" rx="10" ry="20" fill="#f9b8c5"/>
+      <ellipse cx="145" cy="135" rx="10" ry="20" fill="#f9b8c5"/>
+      <!-- head -->
+      <ellipse cx="100" cy="85" rx="50" ry="48" fill="#ffc9d9"/>
+      <!-- snout -->
+      <ellipse cx="100" cy="100" rx="28" ry="22" fill="#ffe1ea"/>
+      <ellipse cx="92" cy="100" rx="3" ry="6" fill="#3b1f2b"/>
+      <ellipse cx="108" cy="100" rx="3" ry="6" fill="#3b1f2b"/>
+      <path d="M100 108 Q95 112 92 108" stroke="#3b1f2b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- eyes -->
+      <ellipse cx="80" cy="72" rx="6" ry="8" fill="#fff"/>
+      <ellipse cx="120" cy="72" rx="6" ry="8" fill="#fff"/>
+      <circle cx="81" cy="73" r="4" fill="#3b1f2b"/>
+      <circle cx="121" cy="73" r="4" fill="#3b1f2b"/>
+      <circle cx="82" cy="71" r="1.5" fill="#fff"/>
+      <circle cx="122" cy="71" r="1.5" fill="#fff"/>
+      <!-- ears -->
+      <ellipse cx="62" cy="50" rx="14" ry="16" fill="#ffc9d9" transform="rotate(-25 62 50)"/>
+      <ellipse cx="138" cy="50" rx="14" ry="16" fill="#ffc9d9" transform="rotate(25 138 50)"/>
+      <!-- cheek blush -->
+      <circle cx="68" cy="92" r="6" fill="#ff9bb5" opacity="0.6"/>
+      <circle cx="132" cy="92" r="6" fill="#ff9bb5" opacity="0.6"/>
+      <!-- legs -->
+      <rect x="78" y="178" width="14" height="14" rx="3" fill="#ffc9d9"/>
+      <rect x="108" y="178" width="14" height="14" rx="3" fill="#ffc9d9"/>
+    </symbol>
+
+    <!-- ============ PINK PANTHER ============ -->
+    <symbol id="mascot-panther" viewBox="0 0 200 200">
+      <!-- shadow -->
+      <ellipse cx="100" cy="185" rx="55" ry="6" fill="rgba(199,55,104,0.18)"/>
+      <!-- body -->
+      <ellipse cx="100" cy="135" rx="55" ry="50" fill="#ff8fb1"/>
+      <!-- belly -->
+      <ellipse cx="100" cy="140" rx="30" ry="35" fill="#ffc4d6"/>
+      <!-- arms -->
+      <ellipse cx="50" cy="120" rx="14" ry="22" fill="#ff8fb1" transform="rotate(-15 50 120)"/>
+      <ellipse cx="150" cy="120" rx="14" ry="22" fill="#ff8fb1" transform="rotate(15 150 120)"/>
+      <!-- legs -->
+      <ellipse cx="78" cy="175" rx="14" ry="18" fill="#ff8fb1"/>
+      <ellipse cx="122" cy="175" rx="14" ry="18" fill="#ff8fb1"/>
+      <!-- head (oval, more elongated) -->
+      <ellipse cx="100" cy="75" rx="55" ry="52" fill="#ff8fb1"/>
+      <!-- ears -->
+      <ellipse cx="55" cy="40" rx="12" ry="18" fill="#ff8fb1" transform="rotate(-30 55 40)"/>
+      <ellipse cx="145" cy="40" rx="12" ry="18" fill="#ff8fb1" transform="rotate(30 145 40)"/>
+      <ellipse cx="55" cy="42" rx="6" ry="10" fill="#ff5b8a" transform="rotate(-30 55 42)"/>
+      <ellipse cx="145" cy="42" rx="6" ry="10" fill="#ff5b8a" transform="rotate(30 145 42)"/>
+      <!-- eyes -->
+      <ellipse cx="82" cy="70" rx="9" ry="11" fill="#fff"/>
+      <ellipse cx="118" cy="70" rx="9" ry="11" fill="#fff"/>
+      <ellipse cx="82" cy="73" rx="5" ry="8" fill="#1a1a2e"/>
+      <ellipse cx="118" cy="73" rx="5" ry="8" fill="#1a1a2e"/>
+      <circle cx="84" cy="70" r="2" fill="#fff"/>
+      <circle cx="120" cy="70" r="2" fill="#fff"/>
+      <!-- nose -->
+      <ellipse cx="100" cy="92" rx="6" ry="4" fill="#1a1a2e"/>
+      <!-- mouth - the famous smirk -->
+      <path d="M100 96 Q100 105 92 108" stroke="#1a1a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M100 96 Q108 102 115 100" stroke="#1a1a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- whiskers -->
+      <line x1="65" y1="95" x2="40" y2="90" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="65" y1="100" x2="40" y2="102" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="135" y1="95" x2="160" y2="90" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="135" y1="100" x2="160" y2="102" stroke="#1a1a2e" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- ============ PEPPAs PIG small (cheering) ============ -->
+    <symbol id="mascot-peppa-cheer" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="185" rx="55" ry="6" fill="rgba(199,55,104,0.18)"/>
+      <ellipse cx="100" cy="150" rx="55" ry="35" fill="#ff4d6d"/>
+      <ellipse cx="55" cy="115" rx="10" ry="20" fill="#f9b8c5" transform="rotate(-45 55 115)"/>
+      <ellipse cx="145" cy="115" rx="10" ry="20" fill="#f9b8c5" transform="rotate(45 145 115)"/>
+      <ellipse cx="100" cy="85" rx="50" ry="48" fill="#ffc9d9"/>
+      <ellipse cx="100" cy="100" rx="28" ry="22" fill="#ffe1ea"/>
+      <ellipse cx="92" cy="100" rx="3" ry="6" fill="#3b1f2b"/>
+      <ellipse cx="108" cy="100" rx="3" ry="6" fill="#3b1f2b"/>
+      <path d="M100 108 Q105 116 110 110" stroke="#3b1f2b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="80" cy="72" rx="6" ry="8" fill="#fff"/>
+      <ellipse cx="120" cy="72" rx="6" ry="8" fill="#fff"/>
+      <circle cx="81" cy="73" r="4" fill="#3b1f2b"/>
+      <circle cx="121" cy="73" r="4" fill="#3b1f2b"/>
+      <ellipse cx="62" cy="50" rx="14" ry="16" fill="#ffc9d9" transform="rotate(-25 62 50)"/>
+      <ellipse cx="138" cy="50" rx="14" ry="16" fill="#ffc9d9" transform="rotate(25 138 50)"/>
+      <circle cx="68" cy="92" r="6" fill="#ff9bb5" opacity="0.6"/>
+      <circle cx="132" cy="92" r="6" fill="#ff9bb5" opacity="0.6"/>
+      <rect x="78" y="178" width="14" height="14" rx="3" fill="#ffc9d9"/>
+      <rect x="108" y="178" width="14" height="14" rx="3" fill="#ffc9d9"/>
+      <!-- sparkle stars -->
+      <text x="20" y="40" font-size="20" fill="#ff6b95">✨</text>
+      <text x="170" y="50" font-size="18" fill="#ff6b95">✨</text>
+    </symbol>
+
+    <!-- ============ PINK PANTHER thumbs up ============ -->
+    <symbol id="mascot-panther-thumbs" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="185" rx="55" ry="6" fill="rgba(199,55,104,0.18)"/>
+      <ellipse cx="100" cy="140" rx="55" ry="50" fill="#ff8fb1"/>
+      <ellipse cx="100" cy="145" rx="30" ry="35" fill="#ffc4d6"/>
+      <!-- arm up thumbs -->
+      <ellipse cx="60" cy="95" rx="14" ry="22" fill="#ff8fb1" transform="rotate(-50 60 95)"/>
+      <circle cx="50" cy="80" r="14" fill="#ff8fb1"/>
+      <rect x="46" y="60" width="8" height="22" rx="4" fill="#ff8fb1"/>
+      <ellipse cx="140" cy="135" rx="14" ry="22" fill="#ff8fb1" transform="rotate(15 140 135)"/>
+      <ellipse cx="78" cy="180" rx="14" ry="18" fill="#ff8fb1"/>
+      <ellipse cx="122" cy="180" rx="14" ry="18" fill="#ff8fb1"/>
+      <ellipse cx="100" cy="75" rx="55" ry="52" fill="#ff8fb1"/>
+      <ellipse cx="55" cy="40" rx="12" ry="18" fill="#ff8fb1" transform="rotate(-30 55 40)"/>
+      <ellipse cx="145" cy="40" rx="12" ry="18" fill="#ff8fb1" transform="rotate(30 145 40)"/>
+      <ellipse cx="82" cy="70" rx="9" ry="11" fill="#fff"/>
+      <ellipse cx="118" cy="70" rx="9" ry="11" fill="#fff"/>
+      <ellipse cx="82" cy="73" rx="5" ry="8" fill="#1a1a2e"/>
+      <ellipse cx="118" cy="73" rx="5" ry="8" fill="#1a1a2e"/>
+      <ellipse cx="100" cy="92" rx="6" ry="4" fill="#1a1a2e"/>
+      <path d="M100 96 Q100 110 110 112" stroke="#1a1a2e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ============== TOP BAR ============== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo"><svg class="mascot" viewBox="0 0 200 200" style="width:32px;height:32px;"><use href="#mascot-panther"/></svg></div>
+    <span>VLearn · Teach Back</span>
+  </div>
+  <nav class="nav-pills" id="nav">
+    <button class="nav-pill active" data-target="sf01"><span class="num">1</span>Lesson</button>
+    <button class="nav-pill" data-target="sf02"><span class="num">2</span>Intro</button>
+    <button class="nav-pill" data-target="sf03"><span class="num">3</span>Teach</button>
+    <button class="nav-pill" data-target="sf04"><span class="num">4</span>Chunk ✓</button>
+    <button class="nav-pill" data-target="sf05"><span class="num">5</span>Result</button>
+    <button class="nav-pill" data-target="sf06"><span class="num">6</span>Quiz</button>
+  </nav>
+</header>
+
+<main class="stage">
+
+  <!-- ============== SF-01 Lesson Detail ============== -->
+  <section class="screen active" id="sf01">
+    <div class="lesson-header">
+      <div class="lesson-cover">
+        <svg class="mascot" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>
+      </div>
+      <div>
+        <span class="tag">REST API</span>
+        <h1>Introduction to REST API <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg></h1>
+        <div class="lesson-meta">
+          <span class="tag green">⏱ 12 phút</span>
+          <span class="tag orange">📚 5 chunks</span>
+          <span class="tag">🧠 Beginner</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h2>📖 Mô tả bài học</h2>
+      <p>Bài học giới thiệu về REST API, một kiến trúc phổ biến trong thiết kế web service. Bạn sẽ học về các HTTP methods, status codes và nguyên tắc stateless.</p>
+
+      <h2 style="margin-top:18px;">🎯 Mục tiêu học tập</h2>
+      <ul class="objectives">
+        <li>Giải thích được REST API là gì và các đặc điểm chính</li>
+        <li>Phân biệt được Client – Server trong kiến trúc REST</li>
+        <li>Nắm được các HTTP Methods: GET, POST, PUT, DELETE</li>
+        <li>Đọc hiểu HTTP Status Codes phổ biến</li>
+        <li>Hiểu nguyên tắc Stateless trong REST</li>
+      </ul>
+
+      <h2 style="margin-top:18px;">📝 Transcript</h2>
+      <div class="transcript-block">
+        <p><strong>00:00 — Giới thiệu:</strong> REST (Representational State Transfer) là một kiến trúc được Roy Fielding giới thiệu năm 2000...</p>
+        <p><strong>02:15 — Client – Server:</strong> Trong mô hình REST, client và server là hai thực thể tách biệt. Client gửi request, server xử lý và trả response...</p>
+        <p><strong>05:00 — HTTP Methods:</strong> GET dùng để lấy dữ liệu, POST để tạo mới, PUT để cập nhật toàn bộ, PATCH để cập nhật một phần, DELETE để xóa...</p>
+        <p><strong>08:30 — Status Codes:</strong> 2xx là thành công, 3xx là redirect, 4xx là lỗi client, 5xx là lỗi server...</p>
+        <p><strong>11:00 — Stateless:</strong> Mỗi request đều độc lập, server không lưu trạng thái của client giữa các request...</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="go('sf02')">🎓 Dạy lại cho Agent</button>
+        <button class="btn secondary">📥 Tải transcript</button>
+      </div>
+    </div>
+  <p class="stage-meta">SF-01 · Lesson Detail · 🐷 Peppa đồng hành · 🐾 Pink Panther là Agent</p>
+  </section>
+
+  <!-- ============== SF-02 Teach Back Introduction ============== -->
+  <section class="screen" id="sf02">
+    <div class="card">
+      <div class="intro-hero">
+        <div class="mascot-stage">
+          <svg class="mascot lg float" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+        </div>
+        <h1>Sẵn sàng dạy lại cho Pink Panther?</h1>
+        <p>Pink Panther sẽ đóng vai <strong>Agent</strong> lắng nghe bạn giải thích <strong>5 phần</strong> của bài học. Peppa sẽ đồng hành cùng bạn như một người bạn học! 🐷💗</p>
+      </div>
+
+      <div class="chunk-preview">
+        <div class="chunk-row done">
+          <div class="check">✓</div>
+          <div class="body">
+            <strong>1. REST API là gì?</strong>
+            <span>Định nghĩa, đặc điểm</span>
+          </div>
+          <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>
+        </div>
+        <div class="chunk-row done">
+          <div class="check">✓</div>
+          <div class="body">
+            <strong>2. Client – Server</strong>
+            <span>Vai trò và tương tác</span>
+          </div>
+          <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>
+        </div>
+        <div class="chunk-row current">
+          <div class="num">3</div>
+          <div class="body">
+            <strong>3. HTTP Methods</strong>
+            <span>GET, POST, PUT, DELETE…</span>
+          </div>
+          <svg class="mascot mascot-tiny tilt-r" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+        </div>
+        <div class="chunk-row locked">
+          <div class="num">4</div>
+          <div class="body">
+            <strong>4. HTTP Status Codes</strong>
+            <span>🔒 Mở khóa sau chunk 3</span>
+          </div>
+        </div>
+        <div class="chunk-row locked">
+          <div class="num">5</div>
+          <div class="body">
+            <strong>5. Stateless principle</strong>
+            <span>🔒 Mở khóa sau chunk 4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn" onclick="go('sf03')">🚀 Bắt đầu dạy</button>
+        <button class="btn secondary" onclick="go('sf01')">← Quay lại</button>
+      </div>
+    </div>
+    <p class="stage-meta">SF-02 · Teach Back Intro · 🐾 Pink Panther sẽ là Agent lắng nghe bạn</p>
+  </section>
+
+  <!-- ============== SF-03 Teaching Session ============== -->
+  <section class="screen" id="sf03">
+    <div class="session-shell">
+      <div class="session-header">
+        <div class="session-title-row">
+          <div class="session-title" style="display:flex; align-items:center; gap:10px;">
+            <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+            <span>REST API · Chunk 3: HTTP Methods</span>
+          </div>
+          <span class="tag">Đang học</span>
+        </div>
+        <div class="stepper">
+          <div class="step-dot done">✓</div>
+          <div class="step-line done"></div>
+          <div class="step-dot done">✓</div>
+          <div class="step-line"></div>
+          <div class="step-dot current">3</div>
+          <div class="step-line"></div>
+          <div class="step-dot">4</div>
+          <div class="step-line"></div>
+          <div class="step-dot">5</div>
+        </div>
+      </div>
+
+      <div class="chat-area" id="chatArea">
+        <!-- messages injected via JS -->
+      </div>
+
+      <div class="hint-row">
+        <button class="hint-chip" onclick="insertHint('Theo transcript thì...')">💡 Tham khảo transcript</button>
+        <button class="hint-chip" onclick="insertHint('Ví dụ: khi tạo user mới...')">💡 Đưa ví dụ</button>
+        <button class="hint-chip" onclick="insertHint('Tóm gọn lại: ...')">💡 Tóm tắt</button>
+      </div>
+
+      <div class="composer">
+        <textarea id="userInput" placeholder="Giải thích HTTP Methods cho Agent nhé…" rows="1"></textarea>
+        <button class="btn" onclick="sendMsg()">Gửi ➤</button>
+      </div>
+    </div>
+
+    <div class="btn-row" style="justify-content:center; margin-top:14px;">
+      <button class="btn success" onclick="go('sf04')">✓ Đạt — Chuyển chunk</button>
+      <button class="btn secondary" onclick="go('sf02')">← Thoát</button>
+    </div>
+    <p class="stage-meta">SF-03 · Teaching Session · 🐾 Agent = Pink Panther · 🐷 Bạn = Peppa</p>
+  </section>
+
+  <!-- ============== SF-04 Chunk Complete ============== -->
+  <section class="screen" id="sf04">
+    <div class="card">
+      <div class="celebrate">
+        <div class="mascot-stage" style="background: linear-gradient(135deg, #ffd700, #ffa500);">
+          <svg class="mascot lg" viewBox="0 0 200 200"><use href="#mascot-peppa-cheer"/></svg>
+        </div>
+        <h1>Hoàn thành chunk 3! 🎉</h1>
+        <p>Peppa rất vui vì bạn đã giải thích rõ <strong>HTTP Methods</strong>. Pink Panther đã validate đủ các key point!</p>
+        <div class="xp-badge">+25 XP · Peppa tặng bạn ⭐</div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="stat-card">
+          <div class="num">3</div>
+          <div class="label">Chunks đã hoàn thành / 5</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">2</div>
+          <div class="label">Teaching loops</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">4/5</div>
+          <div class="label">Key points đạt</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn" onclick="go('sf03')">▶ Tiếp tục chunk 4</button>
+        <button class="btn success" onclick="go('sf05')">Hoàn thành cả bài →</button>
+      </div>
+    </div>
+    <p class="stage-meta">SF-04 · Chunk Complete · 🐷 Peppa ăn mừng cùng bạn!</p>
+  </section>
+
+  <!-- ============== SF-05 Lesson Result ============== -->
+  <section class="screen" id="sf05">
+    <div class="card">
+      <div class="celebrate" style="padding:20px 0;">
+        <div style="display:flex; justify-content:center; gap:16px; align-items:flex-end; margin-bottom:8px;">
+          <svg class="mascot lg float" viewBox="0 0 200 200" style="animation-delay:0s;"><use href="#mascot-peppa-cheer"/></svg>
+          <svg class="mascot lg float" viewBox="0 0 200 200" style="animation-delay:0.4s;"><use href="#mascot-panther-thumbs"/></svg>
+        </div>
+        <h1>Hoàn thành bài học! 🏆</h1>
+        <p>Peppa & Pink Panther chúc mừng bạn đã dạy lại thành công toàn bộ <strong>5 phần</strong> của bài <strong>Introduction to REST API</strong>.</p>
+        <div class="xp-badge">+150 XP · Cả hai mascot tặng bạn 🎁</div>
+      </div>
+
+      <div class="result-grid">
+        <div>
+          <h2>📚 Chi tiết từng chunk</h2>
+          <div class="chunk-list">
+            <div class="chunk-row done">
+              <div class="check">✓</div>
+              <div class="body">
+                <strong>1. REST API là gì?</strong>
+                <span>1 loop · đạt 4/4 key points</span>
+              </div>
+              <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>
+            </div>
+            <div class="chunk-row done">
+              <div class="check">✓</div>
+              <div class="body">
+                <strong>2. Client – Server</strong>
+                <span>2 loops · đạt 3/3 key points</span>
+              </div>
+              <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>
+            </div>
+            <div class="chunk-row done">
+              <div class="check">✓</div>
+              <div class="body">
+                <strong>3. HTTP Methods</strong>
+                <span>2 loops · đạt 4/5 key points</span>
+              </div>
+              <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+            </div>
+            <div class="chunk-row done">
+              <div class="check">✓</div>
+              <div class="body">
+                <strong>4. HTTP Status Codes</strong>
+                <span>1 loop · đạt 5/5 key points</span>
+              </div>
+              <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+            </div>
+            <div class="chunk-row weak">
+              <div class="check" style="background:var(--orange);">!</div>
+              <div class="body">
+                <strong>5. Stateless principle</strong>
+                <span>3 loops · đạt 3/4 key points · cần ôn lại</span>
+              </div>
+              <svg class="mascot mascot-tiny" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-side">
+          <h2>📊 Tổng quan</h2>
+          <div class="stat-card">
+            <div class="num">9</div>
+            <div class="label">Tổng teaching loops</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">19/21</div>
+            <div class="label">Key points đạt</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">15'</div>
+            <div class="label">Thời gian học</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center; margin-top:18px;">
+        <button class="btn success" onclick="go('sf06')">📝 Làm quiz</button>
+        <button class="btn secondary">📖 Ôn lại chunk yếu</button>
+        <button class="btn secondary" onclick="go('sf01')">← Về lesson</button>
+      </div>
+    </div>
+    <p class="stage-meta">SF-05 · Lesson Result · 🐷 Peppa & 🐾 Pink Panther chúc mừng</p>
+  </section>
+
+  <!-- ============== SF-06 Quiz ============== -->
+  <section class="screen" id="sf06">
+    <div class="card quiz-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <span class="tag">Câu 1 / 5</span>
+        <span class="tag orange">⏱ 00:42</span>
+      </div>
+      <div class="quiz-progress">
+        <div class="quiz-progress-fill" id="quizBar" style="width:20%;"></div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+        <svg class="mascot mascot-tiny" viewBox="0 0 200 200" style="width:48px;height:48px;"><use href="#mascot-panther"/></svg>
+        <div>
+          <h2 style="font-size:14px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:0;">Pink Panther hỏi bạn</h2>
+        </div>
+      </div>
+      <div class="quiz-question" id="quizQ">
+        HTTP method nào dùng để <strong>tạo mới</strong> một resource?
+      </div>
+
+      <div id="quizOpts">
+        <button class="quiz-option" data-correct="false" onclick="pickAnswer(this)">A. GET</button>
+        <button class="quiz-option" data-correct="true" onclick="pickAnswer(this)">B. POST</button>
+        <button class="quiz-option" data-correct="false" onclick="pickAnswer(this)">C. PUT</button>
+        <button class="quiz-option" data-correct="false" onclick="pickAnswer(this)">D. DELETE</button>
+      </div>
+
+      <div class="quiz-feedback" id="quizFb">
+        ✅ Chính xác! <strong>POST</strong> dùng để tạo mới một resource trên server. PUT thường dùng để cập nhật toàn bộ resource đã tồn tại.
+      </div>
+
+      <div class="btn-row" style="justify-content:space-between; margin-top:18px;">
+        <button class="btn secondary">← Bỏ qua</button>
+        <button class="btn success" id="quizNext" onclick="nextQuiz()" style="display:none;">Câu tiếp →</button>
+      </div>
+    </div>
+    <p class="stage-meta">SF-06 · VLearn Quiz · 🐾 Pink Panther đang chờ câu trả lời của bạn</p>
+  </section>
+
+</main>
+
+<script>
+/* ============== Navigation ============== */
+const nav = document.getElementById('nav');
+nav.addEventListener('click', (e) => {
+  const btn = e.target.closest('.nav-pill');
+  if (!btn) return;
+  go(btn.dataset.target);
+});
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const pill = document.querySelector(`.nav-pill[data-target="${id}"]`);
+  if (pill) pill.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============== SF-03 Chat simulation ============== */
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+
+function addMsg(html, who='agent') {
+  const mascot = who === 'agent'
+    ? '<svg class="mascot" viewBox="0 0 200 200"><use href="#mascot-panther"/></svg>'
+    : '<svg class="mascot" viewBox="0 0 200 200"><use href="#mascot-peppa"/></svg>';
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerHTML = `
+    <div class="avatar">${mascot}</div>
+    <div class="bubble">${html}</div>
+  `;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function seedChat() {
+  chatArea.innerHTML = '';
+  addMsg(`Chào bạn! 👋 Tôi là <strong>Agent VLearn</strong>. Hôm nay bạn sẽ dạy lại cho tôi về <strong>HTTP Methods</strong>. Hãy bắt đầu nhé!`, 'agent');
+  addMsg(`Bạn hãy giải thích cho tôi: <strong>HTTP Methods là gì</strong> và <strong>mỗi method dùng để làm gì</strong>?`, 'agent');
+}
+
+function insertHint(text) {
+  userInput.value = userInput.value
+    ? userInput.value + ' ' + text
+    : text;
+  userInput.focus();
+}
+
+let turn = 0;
+function sendMsg() {
+  const v = userInput.value.trim();
+  if (!v) return;
+  addMsg(escapeHtml(v), 'user');
+  userInput.value = '';
+  turn++;
+  setTimeout(() => {
+    if (turn === 1) {
+      addMsg(`Cảm ơn bạn! Tôi đã hiểu phần <strong>GET, POST, DELETE</strong>. Nhưng có một điểm tôi chưa rõ 🤔<br><br><strong>POST và PUT</strong> khác nhau ở đâu? Khi nào nên dùng cái nào?
+        <div class="gap-badge">⚠️ Gap detected — POST vs PUT</div>`, 'agent');
+    } else if (turn === 2) {
+      addMsg(`Tuyệt vời! 🎉 Bạn đã giải thích rõ sự khác biệt giữa POST và PUT, cũng như khi nào nên dùng PATCH.<br><br>Tôi nghĩ bạn đã <strong>pass</strong> chunk này. Sẵn sàng cho chunk tiếp theo chưa?`, 'agent');
+    } else {
+      addMsg(`Tôi đã ghi nhận. Bạn có thể bấm <strong>✓ Đạt — Chuyển chunk</strong> bên dưới để tiếp tục!`, 'agent');
+    }
+  }, 600);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// Enter to send
+userInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMsg();
+  }
+});
+
+/* ============== SF-06 Quiz ============== */
+const quizData = [
+  {
+    q: 'HTTP method nào dùng để <strong>tạo mới</strong> một resource?',
+    opts: ['GET','POST','PUT','DELETE'],
+    correct: 1,
+    fb: '✅ Chính xác! <strong>POST</strong> dùng để tạo mới một resource trên server. PUT thường dùng để cập nhật toàn bộ resource đã tồn tại.'
+  },
+  {
+    q: 'Status code <strong>404</strong> có nghĩa là gì?',
+    opts: ['Lỗi server','Resource không tìm thấy','Thành công','Redirect'],
+    correct: 1,
+    fb: '✅ Đúng rồi! <strong>404 Not Found</strong> nằm trong nhóm 4xx — lỗi do client (resource không tồn tại).'
+  },
+  {
+    q: 'Nguyên tắc <strong>Stateless</strong> trong REST nghĩa là?',
+    opts: [
+      'Server lưu trạng thái client giữa các request',
+      'Mỗi request độc lập, server không lưu state',
+      'Client phải lưu toàn bộ DB',
+      'Phải dùng cookie trong mọi request'
+    ],
+    correct: 1,
+    fb: '✅ Chuẩn! <strong>Stateless</strong> = mỗi request chứa đủ thông tin để server xử lý, không phụ thuộc vào request trước.'
+  }
+];
+let qIdx = 0;
+function pickAnswer(btn) {
+  const opts = document.querySelectorAll('#quizOpts .quiz-option');
+  opts.forEach(o => {
+    o.onclick = null;
+    o.style.pointerEvents = 'none';
+    if (o.dataset.correct === 'true') o.classList.add('correct');
+    else if (o === btn) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('quizFb');
+  fb.innerHTML = quizData[qIdx].fb;
+  fb.classList.add('show');
+  document.getElementById('quizNext').style.display = 'inline-block';
+}
+function nextQuiz() {
+  qIdx = (qIdx + 1) % quizData.length;
+  const q = quizData[qIdx];
+  document.getElementById('quizQ').innerHTML = q.q;
+  const opts = document.querySelectorAll('#quizOpts .quiz-option');
+  opts.forEach((o, i) => {
+    o.className = 'quiz-option';
+    o.textContent = String.fromCharCode(65 + i) + '. ' + q.opts[i];
+    o.dataset.correct = (i === q.correct) ? 'true' : 'false';
+    o.style.pointerEvents = 'auto';
+    o.onclick = function () { pickAnswer(this); };
+  });
+  document.getElementById('quizFb').classList.remove('show');
+  document.getElementById('quizFb').innerHTML = '';
+  document.getElementById('quizNext').style.display = 'none';
+  document.getElementById('quizBar').style.width = (((qIdx + 1) / quizData.length) * 100) + '%';
+  document.querySelector('.quiz-card .tag').textContent = `Câu ${qIdx + 1} / ${quizData.length}`;
+}
+
+/* init */
+seedChat();
+document.getElementById('quizBar').style.width = (1 / quizData.length * 100) + '%';
+</script>
+
+</body>
+</html>
