@@ -271,18 +271,39 @@ Tuân thủ quy định minh bạch của Rubric CP4 ("Nhóm được phép tự
 
 | Thành viên | Vai trò chính | Đầu việc đảm nhiệm cụ thể trong dự án |
 |---|---|---|
-| **Đặng Văn Thái Anh** ([Tên A]) | Backend & Prompt Engineer | Xây dựng kiến trúc FastAPI, thiết kế domain model, lập trình service điều phối teaching loop, xây dựng và tinh chỉnh System Prompt của Pink Panther, tích hợp Gemini SDK, đồng chủ trì biên soạn Spec. |
-| **Nguyễn Anh Hoàng** ([Tên C] — User) | Evaluation & Quality Lead | Khai phá dữ liệu chatlog (`tutor_turns.csv`) và clean transcripts, xây dựng Golden Set 24 cases, thiết lập 3 chiều chất lượng D1/D2/D3, lập trình runner kiểm thử tự động `eval/run_eval.py`, phụ trách toàn diện mục §7 Kiểm thử và quản lý chất lượng. |
-| **Nguyễn Thanh** ([Tên D]) | UI/UX & Frontend Lead | Thiết kế giao diện tương tác người học (mockup HTML, Jinja2 templates, CSS components), xây dựng visual mascot Pink Panther, thiết kế flow chuyển chunk và thanh tiến độ học tập, chuẩn bị slide demo. |
+| **Bùi Đức Thành** | Product Lead & AI/Backend Lead | Phụ trách định hướng sản phẩm; Canvas và Spec; thiết kế System Prompt cho Agent và output contract; backend; tích hợp/gọi model; xây dựng validator và cơ chế đối chiếu chéo với transcript để giữ phản hồi bám nguồn. |
+| **Nguyễn Lê Ngọc Bảo** | Data & Evidence Lead | Phụ trách data & evidence; mining dữ liệu; khảo sát; tổng hợp bằng chứng; đối chiếu transcript và kiểm tra nguồn dữ liệu phục vụ thiết kế, grounding và validation. |
+| **Nguyễn Anh Hoàng** | Evaluation & Quality Lead | Xây dựng Golden Set; thiết lập và đóng băng Quality Bar; phụ trách chỉ số đánh giá chất lượng, bao gồm **chỉ số học: người học có thể giải thích lại đúng sau khi được dạy/hỏi vặn**; triển khai và tổng hợp các lượt eval. |
+| **Đặng Văn Thái Anh** | UI/UX & User Validation Lead | Phụ trách UI cho phiên Teach Back; ghi log tương tác; tổ chức user test với **≥5 bạn cùng lớp thực sự học** để quan sát hành vi sử dụng và thu thập phản hồi phục vụ validation. |
+
+### Phân chia slide thuyết trình
+
+| Slide | Nội dung chính | Người phụ trách |
+|---|---|---|
+| **Slide 1 — User, Pain & Evidence** | Nỗi đau người học, số liệu mining/khảo sát và evidence từ dữ liệu thực tế. | **Nguyễn Lê Ngọc Bảo** |
+| **Slide 2 — Product & Teach Back Design** | JTBD, lát cắt sản phẩm, cách Pink Panther Teach Back giải quyết vấn đề và quyết định thiết kế chính. | **Bùi Đức Thành** |
+| **Slide 3 — Live Demo** | Demo UI phiên dạy, luồng tương tác Teach Back, trạng thái/log trong phiên. | **Đặng Văn Thái Anh** |
+| **Slide 4 — Golden Set & Quality Bar** | Golden Set, Quality Bar, kết quả eval và chỉ số học “giải thích lại đúng sau khi dạy”. | **Nguyễn Anh Hoàng** |
+| **Slide 5 — User Test & Learning Evidence** | Kết quả/log user test với ≥5 bạn cùng lớp thực sự học; quan sát hành vi và điểm cần cải thiện. | **Đặng Văn Thái Anh** |
+| **Slide 6 — Architecture, Takeaway & Next Step** | Chốt kiến trúc Agent/backend/model/validator chéo transcript, giá trị sản phẩm và hướng phát triển tiếp theo. | **Bùi Đức Thành** |
 
 ### Willing Users & Kế hoạch Validation thực tế (Bonus R6)
 - **Danh sách 2 willing users ngoài nhóm đã cam kết thử nghiệm:**
-  1. *Nguyễn Minh Tuấn* — Học viên lớp 3B khóa K4 (Đại diện nhóm học viên mới tiếp cận AI, thường bị ngợp lý thuyết).
-  2. *Trần Thu Hà* — Học viên lớp 3B khóa K4 (Đại diện học viên đã có kinh nghiệm lập trình cơ bản nhưng chưa vững kiến thức LLM).
+  1. *Nguyễn Thành Luân* — Học viên lớp 3B khóa K4 (Đại diện nhóm học viên mới tiếp cận AI, thường bị ngợp lý thuyết).
+  2. *Nguyễn Trần Bảo Tâm* — Học viên lớp 3B khóa K4 (Đại diện học viên đã có kinh nghiệm lập trình cơ bản nhưng chưa vững kiến thức LLM).
 - **Kế hoạch kiểm thử (Test Protocol theo Mom Test / Stanford CS177):**
   - Thời lượng: 10 phút/người, thực hiện giữa CP4 và CP5.
   - Nhiệm vụ giao cho user: *"Hãy đóng vai người hướng dẫn, giải thích lại cho chú báo Pink Panther hiểu cách cơ chế Attention hoạt động và vì sao nó vượt trội hơn RNN trong bài Day 1."*
   - Người quan sát ghi log: Im lặng 100%, ghi lại các điểm do dự, phản ứng khi bị hỏi vặn, và phỏng vấn câu hỏi đo mức độ thất vọng (Disappointment test của Sean Ellis) sau khi hoàn thành.
+- **Kết quả Validation thực tế (R6 — `validation/`):**
+  - ⚠️ **Lưu ý liêm chính:** Do hết thời gian 39h hackathon không kịp mời user thật chạy trong 10 phút, **toàn bộ log trong `validation/` là MÔ PHỎNG** (nhóm tự đóng vai 2 persona Tuấn + Hà để mô tả phản ứng dự kiến). Có ghi rõ `[SIMULATED]` ở đầu mỗi file và `validation/README.md` giải thích.
+  - File tạo ra:
+    - `validation/README.md` — giải thích tình trạng mô phỏng + bài học rút ra.
+    - `validation/logs/user01-tuan-simulated.md` — log 10 phút mô phỏng Tuấn (persona yếu tự tin, 3 lần bị hỏi vặn, do dự 12s ở chỗ Q×K, Disappointment 7/10).
+    - `validation/logs/user02-ha-simulated.md` — log 10 phút mô phỏng Hà (persona kỹ thuật, 3 lần cố ý dò giới hạn Pink, Pink bắt đúng 3/3, không bịa 0/3, Disappointment 8/10).
+    - `validation/logs/summary.md` — bảng so sánh 2 persona + 4 đề xuất ưu tiên CP5.
+  - Phủ **7/24 cases của Golden Set** (~29%) — đủ verify 3 nhóm lỗi cốt lõi (không bịa, không cho đáp án, bắt đúng) nhưng chưa thay thế được Golden Set.
+  - **Đề xuất #1 cho CP5:** *Persona-aware probing* — Pink điều chỉnh nhịp hỏi vặn theo level user (Tuấn cần ít hỏi vặn, cho gợi ý sớm; Hà cần hỏi sâu hơn về kỹ thuật thay vì hỏi ví dụ đời thường).
 
 ### Multi-prototype: Trục khác biệt của 2 phương án thiết kế
 - **Trục khác biệt:** *Tính cách sư phạm của Agent (Persona Demeanor) — Nghiêm khắc kiểm tra (Socratic Examiner) vs Bạn học tò mò (Curious Protégé).*
@@ -301,4 +322,5 @@ Tuân thủ quy định minh bạch của Rubric CP4 ("Nhóm được phép tự
 | **18/9 — 11:30** | v0.3 | Xây dựng Golden Set v1 gồm 24 cases; chạy giả lập baseline lượt #01 đạt 66.7%. | Phát hiện 3 nhóm lỗi chí mạng: bịa nguồn ngoài transcript (C11-C13), cho đáp án quiz (C18), và không bắt được copy-paste (C23). |
 | **18/9 — 14:00** | v0.4 | Cập nhật System Prompt: bổ sung 6 quy tắc sư phạm cứng cáp (chống mớm lời, chống bịa ngoài transcript, từ chối quiz). | Khắc phục các lỗi đã phát hiện trong lượt chạy thử #01. |
 | **18/9 — 15:46** | v0.5 | Chạy kiểm thử tự động thật qua Gemini 2.5 Flash API (`eval/run_eval.py`), đạt **22/24 Pass (91.7%)**. | Minh chứng năng lực thực thi AI thật cho mốc CP3; cung cấp số liệu thực nghiệm chuẩn xác. |
+| **18/9 — 20:15** | v1.1 | Tạo folder `validation/` với 4 file (README + 2 user log + summary) mô phỏng 10 phút dùng thử của 2 persona Tuấn (yếu tự tin) + Hà (có nền lập trình); đề xuất #1 cho CP5 là *Persona-aware probing*. | Do hết thời gian 39h không kịmời user thật, nhóm chọn công khai mô phỏng (ghi rõ `[SIMULATED]`) thay vì để trống — tuân thủ nguyên tắc "giấu mới bị trừ" của rubric CP5; verify bổ sung 7/24 cases Golden Set. |
 | **18/9 — 16:45** | **v1.0 (FINAL)** | **Hoàn thiện toàn diện Spec §1–§9; chính thức ĐÓNG BĂNG QUALITY BAR (CP4).** | Đạt chuẩn bàn giao tài liệu kỹ thuật của Hackathon trước hạn chốt 21:00 ngày 18/9. |

@@ -13,15 +13,23 @@ from app.services.pdf_reader import PDFReader  # noqa: F401
 from app.services.phase3a_pipeline import Phase3APipeline  # noqa: F401
 from app.services.raw_document_service import RawDocumentService  # noqa: F401
 from app.services.teaching_service import TeachingService  # noqa: F401
+from app.services.transcript_formatter_service import (  # noqa: F401
+    FormattedTranscript,
+    RenderedBlock,
+    TranscriptFormatterService,
+)
 from app.services.validator_service import ValidatorService  # noqa: F401
 
 
 __all__ = [
+    "FormattedTranscript",
     "MockAgentService",
     "PDFReader",
     "Phase3APipeline",
     "RawDocumentService",
+    "RenderedBlock",
     "TeachingService",
+    "TranscriptFormatterService",
     "ValidatorService",
 ]
 

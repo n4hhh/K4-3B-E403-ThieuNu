@@ -203,6 +203,36 @@ Tests are currently **skeletons** that verify the application boots, routes are 
 - ✅ Test skeletons
 - ✅ `requirements.txt`, `README.md`, `.gitignore`
 
+### UI Features
+
+- ✅ **Collapsible long content** on the lesson detail page. Four blocks are now collapsible via a unified helper `bindCollapsibles()` in `static/js/app.js`:
+  1. **Description** (`summary` + `description`) — `.collapsible-text` with `data-lines="6"`.
+  2. **Transcript Preview** — `.collapsible-text` with `data-lines="6"` inside `.transcript-box`. The toggle button sits inline (overlay on the pink fade gradient) when collapsed, then transitions to an inline-under-text button when expanded.
+  3. **Objectives** (Mục tiêu học tập) — `.collapsible-list` wrapping the `<ul>` with `data-lines="4"`.
+  4. **Chunks Overview** (Các phần trong bài, sidebar) — `.collapsible-list` wrapping `.chunk-preview` with `data-lines="4"`.
+
+  For all four, the chevron icon rotates 180° when expanded (`aria-expanded="true"`) and the label flips "Xem thêm" → "Thu gọn". If the content fits within the visible lines, the toggle is hidden automatically — short descriptions stay readable without an unnecessary click.
+
+  Implementation:
+  - `templates/lesson.html` — markup with `.collapsible-text` / `.collapsible-list` / `.toggle-text-btn` (block-level + inline variants).
+  - `static/css/components.css` — collapse / fade styles for both wrappers; pseudo-element fade for lists via `::after` when `.has-overflow`.
+  - `static/js/app.js` — `bindCollapsibles()` measures overflow per block (line-height for text, item-height for lists), wires the click handler, and updates `aria-expanded` + `aria-controls` for accessibility.
+
+- ✅ **Structured transcript rendering** (Tóm tắt nội dung). The lesson detail page now shows the transcript as a hierarchy of typed blocks (`heading` / `bullet` / `definition` / `example` / `table` / `note`) instead of a wall of plain text. Three render paths, picked automatically per lesson:
+  1. **Structured** — when a `StructuredLesson` is available via `PublishedLessonRepository` (i.e. the Documentizer has run), we render the published `sections[].blocks[]` directly.
+  2. **AI-assisted** — `TranscriptFormatterService.format_with_ai()` parses the raw transcript into a focused prompt for the configured AI provider (Gemini by default), parses the JSON response, and persists the result to `data/transcript_cache/{sha256}.json` so re-renders are free.
+  3. **Heuristic fallback** — a deterministic, zero-network regex-based formatter that splits transcripts into headings (ALL-CAPS short lines), bullets (`•`, `-`, numbered), `Term: def` definitions, and paragraphs (notes). Used when AI is unavailable or the heuristic already produces well-structured output.
+
+  Each block type has its own CSS class (`.transcript-heading`, `.transcript-bullet`, `.transcript-definition`, `.transcript-example`, `.transcript-table`, `.transcript-note`) and a small "Nguồn: ai | heuristic | structured | cache" badge appears under the block so reviewers know which path produced the output.
+
+  Implementation:
+  - `app/services/transcript_formatter_service.py` — the `TranscriptFormatterService` plus heuristic + AI helpers (`_heuristic_format`, `_try_ai_reformat`).
+  - `app/routers/pages.py` — `lesson_detail` loads the published `StructuredLesson`, calls `format_with_ai()`, and prefers the structured blocks when available.
+  - `templates/lesson.html` — new `{% macro render_block(block) %}` renders each block type; the transcript section iterates over `formatted_transcript.blocks`.
+  - `static/css/components.css` — per-block-type styling (pink headings, dashed bullets, definition cards, example callouts, table wrapper, source badge).
+  - `data/transcript_cache/` — per-transcript JSON cache, content-hashed so it survives lesson reloads.
+  - `requirements.txt` — adds `google-genai>=1.0.0` so the AI path is enabled out of the box.
+
 ---
 
 ## 9. Out of Scope (next phases)

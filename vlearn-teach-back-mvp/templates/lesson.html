@@ -1,5 +1,85 @@
 {% extends "base.html" %}
 
+{# ------------------------------------------------------------------- #}
+{#  Macros for rendering a structured transcript (formatted_transcript) #}
+{# ------------------------------------------------------------------- #}
+{% macro render_paragraphs(text, css_class='paragraph-block') -%}
+    {#-
+        Split a raw text into separate <p> blocks based on blank lines.
+        Why: PDF-extracted descriptions / transcripts arrive as a wall of
+        single-\n lines that, when rendered as one <p>, look jammed
+        together even with `white-space: pre-line`. Splitting on blank
+        lines gives the user clear visual paragraph separation.
+        Lines within a paragraph are joined with a single space so the
+        text reads as normal prose instead of a stack of single-word
+        lines.
+    -#}
+    {%- if text -%}
+        {%- set paragraphs = text.split('\n\s*\n') -%}
+        {%- for para in paragraphs -%}
+            {%- set cleaned = para.strip() -%}
+            {%- if cleaned -%}
+                {%- set joined = cleaned|replace('\n', ' ') -%}
+                <p class="{{ css_class }}">{{ joined }}</p>
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro render_block(block) -%}
+    {% set btype = block.type %}
+    {% if btype == 'heading' %}
+        {% if block.level and block.level <= 2 %}
+            <h3 class="transcript-heading transcript-heading--l{{ block.level }}">{{ block.text }}</h3>
+        {% else %}
+            <h4 class="transcript-heading transcript-heading--l{{ block.level or 3 }}">{{ block.text }}</h4>
+        {% endif %}
+    {% elif btype == 'bullet' %}
+        <div class="transcript-bullet transcript-bullet--{{ block.marker or 'disc' }}">
+            {% if block.marker == 'numbered' %}
+                <span class="bullet-marker bullet-marker--number"><i class="bi bi-check2"></i></span>
+            {% elif block.marker == 'check' %}
+                <span class="bullet-marker bullet-marker--check"><i class="bi bi-check-circle-fill"></i></span>
+            {% elif block.marker == 'dash' %}
+                <span class="bullet-marker bullet-marker--dash">—</span>
+            {% else %}
+                <span class="bullet-marker bullet-marker--disc"><i class="bi bi-dot"></i></span>
+            {% endif %}
+            <span class="bullet-text">{{ block.text }}</span>
+        </div>
+    {% elif btype == 'definition' %}
+        <div class="transcript-definition">
+            <strong class="term">{{ block.term }}</strong>
+            <span class="def">{{ block.definition }}</span>
+        </div>
+    {% elif btype == 'example' %}
+        <div class="transcript-example">
+            <div class="example-label"><i class="bi bi-lightbulb me-1"></i>Ví dụ</div>
+            <div class="example-text">{{ block.text }}</div>
+            {% if block.caption %}<div class="example-caption">{{ block.caption }}</div>{% endif %}
+        </div>
+    {% elif btype == 'table' %}
+        <div class="transcript-table-wrapper">
+            <table class="transcript-table">
+                {% if block.headers %}
+                    <thead>
+                        <tr>{% for h in block.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+                    </thead>
+                {% endif %}
+                <tbody>
+                    {% for row in block.rows %}
+                        <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif btype == 'note' %}
+        <p class="transcript-note">{{ block.text }}</p>
+    {% else %}
+        <p class="transcript-note">{{ block.text }}</p>
+    {% endif %}
+{%- endmacro %}
+
 {% block title %}{{ selected.title if selected else "Bài học" }} · VLearn{% endblock %}
 
 {% block content %}
@@ -32,25 +112,60 @@
                     </div>
 
                     <!-- Description -->
-                    <p class="lead mt-4">{{ selected.summary }}</p>
-                    <p>{{ selected.description }}</p>
+                    <div id="description-content"
+                         class="collapsible-text collapsed"
+                         data-lines="6">
+                        {% if selected.summary %}
+                            <p class="lead mt-4 paragraph-block paragraph-block--lead">{{ selected.summary }}</p>
+                        {% endif %}
+                        {{ render_paragraphs(selected.description) }}
+                    </div>
+                    <button type="button"
+                            class="toggle-text-btn d-none"
+                            aria-expanded="false"
+                            aria-controls="description-content">
+                        <i class="bi bi-chevron-down me-1"></i>
+                        <span class="toggle-label">Xem thêm</span>
+                    </button>
 
                     <!-- Objectives -->
                     <h2 class="h5 mt-4 mb-3">
                         <i class="bi bi-bullseye text-primary me-2"></i>
                         Mục tiêu học tập
                     </h2>
-                    <ul class="list-group mb-4">
-                        {% for chunk in selected.chunks %}
-                            <li class="list-group-item d-flex align-items-start">
-                                <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
-                                <div>
-                                    <strong>{{ chunk.title }}</strong>
-                                    <div class="small text-muted">{{ chunk.description }}</div>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                    <div id="objectives-content"
+                         class="collapsible-list collapsed"
+                         data-lines="4">
+                        <ul class="list-group mb-0">
+                            {% for chunk in selected.chunks %}
+                                <li class="list-group-item d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                                    <div>
+                                        <strong>{{ chunk.title }}</strong>
+                                        <div class="small text-muted">
+                                            {%- set cd = (chunk.description or '') -%}
+                                            {%- if cd -%}
+                                                {%- set cd_paras = cd.split('\n\s*\n') -%}
+                                                {%- for para in cd_paras -%}
+                                                    {%- set pclean = para.strip() -%}
+                                                    {%- if pclean -%}
+                                                        <p class="objective-paragraph mb-1">{{ pclean|replace('\n', ' ') }}</p>
+                                                    {%- endif -%}
+                                                {%- endfor -%}
+                                            {%- endif -%}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <button type="button"
+                            class="toggle-text-btn d-none"
+                            aria-expanded="false"
+                            aria-controls="objectives-content">
+                        <i class="bi bi-chevron-down me-1"></i>
+                        <span class="toggle-label">Xem thêm</span>
+                    </button>
 
                     <!-- Transcript Preview -->
                     {% if selected.transcript %}
@@ -58,8 +173,37 @@
                         <i class="bi bi-card-text text-primary me-2"></i>
                         Tóm tắt nội dung
                     </h2>
-                    <div class="p-3 rounded" style="background: var(--vl-pink-50); border: 2px dashed var(--vl-pink-200);">
-                        <p class="mb-0">{{ selected.transcript }}</p>
+                    <div class="transcript-box">
+                        <div id="transcript-content"
+                             class="collapsible-text collapsed"
+                             data-lines="6">
+                            {% if formatted_transcript and formatted_transcript.blocks %}
+                                <div class="transcript-structured">
+                                    {% for block in formatted_transcript.blocks %}
+                                        {{ render_block(block) }}
+                                    {% endfor %}
+                                </div>
+                            {% elif selected.transcript %}
+                                <div class="transcript-fallback">
+                                    {{ render_paragraphs(selected.transcript, 'transcript-fallback-p') }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="transcript-fade" aria-hidden="true"></div>
+                        <button type="button"
+                                class="toggle-text-btn toggle-text-btn--inline d-none"
+                                aria-expanded="false"
+                                aria-controls="transcript-content">
+                            <i class="bi bi-chevron-down me-1"></i>
+                            <span class="toggle-label">Xem thêm</span>
+                        </button>
+                        {% if formatted_transcript and formatted_transcript.source %}
+                            <div class="transcript-source-badge"
+                                 title="Nguồn transcript: {{ formatted_transcript.source }}">
+                                <i class="bi bi-info-circle"></i>
+                                Nguồn: {{ formatted_transcript.source }}{% if formatted_transcript.cached %} (cached){% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                     {% endif %}
 
@@ -107,17 +251,28 @@
                     <h3 class="h6 text-uppercase text-muted small mb-3">
                         <i class="bi bi-list-ul me-1"></i> Các phần trong bài
                     </h3>
-                    <div class="chunk-preview">
-                        {% for chunk in selected.chunks %}
-                            <div class="chunk-row">
-                                <div class="num">{{ loop.index }}</div>
-                                <div class="body">
-                                    <strong>{{ chunk.title }}</strong>
-                                    <span>{{ chunk.key_points|length }} điểm chính</span>
+                    <div id="chunks-overview-content"
+                         class="collapsible-list collapsed"
+                         data-lines="4">
+                        <div class="chunk-preview mb-0">
+                            {% for chunk in selected.chunks %}
+                                <div class="chunk-row">
+                                    <div class="num">{{ loop.index }}</div>
+                                    <div class="body">
+                                        <strong>{{ chunk.title }}</strong>
+                                        <span>{{ chunk.key_points|length }} điểm chính</span>
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
                     </div>
+                    <button type="button"
+                            class="toggle-text-btn d-none"
+                            aria-expanded="false"
+                            aria-controls="chunks-overview-content">
+                        <i class="bi bi-chevron-down me-1"></i>
+                        <span class="toggle-label">Xem thêm</span>
+                    </button>
                 </div>
             </div>
         </div>

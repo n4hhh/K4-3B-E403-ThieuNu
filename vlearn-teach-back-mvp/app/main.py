@@ -30,6 +30,9 @@ from app.services.lesson_service import LessonService
 from app.services.mock_agent_service import MockAgentService
 from app.services.pdf_lesson_service import PDFLessonService
 from app.services.teaching_service import TeachingService
+from app.services.transcript_formatter_service import (
+    TranscriptFormatterService,
+)
 from app.services.validator_service import ValidatorService
 
 
@@ -95,6 +98,7 @@ def create_app() -> FastAPI:
         validator=application.state.validator_service,
         agent=application.state.agent_service,
     )
+    application.state.transcript_formatter = TranscriptFormatterService()
     logger.info(
         "LessonRepository source: %s (%d lessons).",
         application.state.lesson_repository.source,

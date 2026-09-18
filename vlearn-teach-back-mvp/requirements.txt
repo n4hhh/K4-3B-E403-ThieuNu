@@ -6,3 +6,4 @@ pypdf
 python-dotenv
 pytest
 httpx
+google-genai>=1.0.0

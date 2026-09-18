@@ -634,7 +634,464 @@
     margin-bottom: 1rem;
 }
 
-/* ============== Error State ============== */
+/* ============== Collapsible Text (Description / Transcript) ============== */
+/*
+   - Theo mặc định text hiển thị đầy đủ nhiều dòng, nhưng khi nội dung dài quá
+     `data-lines` dòng (JS sẽ tự tính dựa trên scrollHeight), khối sẽ bị
+     giới hạn chiều cao và hiển thị gradient fade + nút "Xem thêm".
+   - `white-space: pre-line` giữ nguyên các ký tự xuống dòng có sẵn trong
+     transcript/description để người học dễ đọc.
+*/
+.collapsible-text {
+    position: relative;
+    overflow: hidden;
+    white-space: pre-line;
+    word-wrap: break-word;
+    transition: max-height 0.35s ease;
+}
+
+.collapsible-text.collapsed {
+    max-height: var(--vl-collapse-max-height, 8.4em);
+}
+
+.collapsible-text:not(.collapsed) {
+    max-height: 2000px;
+}
+
+/* ============== Collapsible List (Objectives / Chunks Overview) ============== */
+/*
+   Dành cho khối danh sách (list-group / chunk-preview) — dùng cho phần
+   "Mục tiêu học tập" và "Các phần trong bài" ở sidebar.
+
+   - JS sẽ đo scrollHeight của wrapper và so sánh với `data-lines` * line-height
+     của các item (li.list-group-item hoặc .chunk-row) để quyết định có
+     collapse hay không.
+   - Khi collapsed: khối bị giới hạn max-height, item cuối bị fade nhẹ bằng
+     gradient hồng để gợi ý còn nội dung.
+   - Khi expanded: hiển thị tất cả item, nút đổi label "Xem thêm" → "Thu gọn".
+*/
+.collapsible-list {
+    position: relative;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    --vl-collapse-max-height: 8.4em;
+}
+
+.collapsible-list.collapsed {
+    max-height: var(--vl-collapse-max-height);
+}
+
+.collapsible-list:not(.collapsed) {
+    max-height: 4000px;
+}
+
+/* Fade gradient ở dưới khi list bị collapse */
+.collapsible-list.has-overflow::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50px;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 250, 243, 0) 0%,
+        #fff 85%
+    );
+    pointer-events: none;
+    border-bottom-left-radius: var(--vl-radius-md);
+    border-bottom-right-radius: var(--vl-radius-md);
+}
+
+/* Nếu list chứa nhiều chunk-row trên nền hồng nhạt → đổi gradient cho khớp */
+.chunk-preview.collapsible-list-context.has-overflow::after,
+.collapsible-list.has-overflow:has(.chunk-preview)::after {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 245, 247, 0) 0%,
+        var(--vl-pink-50) 85%
+    );
+}
+
+/* Responsive: thu gọn cap thấp hơn trên mobile */
+@media (max-width: 768px) {
+    .collapsible-list.collapsed {
+        --vl-collapse-max-height: 7.2em;
+    }
+}
+
+/* Bỏ giới hạn `white-space: pre-line` riêng cho thẻ <p> để các đoạn văn
+   vẫn có khoảng cách giữa các khối khi người dùng bấm "Xem thêm". */
+.collapsible-text p {
+    white-space: normal;
+    margin-bottom: 0.85rem;
+    line-height: 1.75;
+}
+
+.collapsible-text p:last-child {
+    margin-bottom: 0;
+}
+
+/* Lead paragraph in description — slightly larger and bolder, still
+   keeps the same vertical rhythm as the rest of the description. */
+.collapsible-text .paragraph-block--lead {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--vl-ink);
+    line-height: 1.65;
+    margin-bottom: 1rem;
+}
+
+/* Objective / chunk description inner paragraphs — small, no extra
+   top margin (first item under the bold title). */
+.objective-paragraph {
+    line-height: 1.55;
+}
+
+/* Nút "Xem thêm / Thu gọn" */
+.toggle-text-btn {
+    margin-top: 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--vl-pink-600);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--vl-radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.toggle-text-btn:hover {
+    color: var(--vl-pink-700);
+    background: var(--vl-pink-50);
+}
+
+/* Biến thể inline (overlay trên .transcript-box) — dùng cho Transcript Preview.
+   Khi collapsed, nút được neo ở góc dưới-phải bên trong transcript-box,
+   nằm chồng lên fade gradient để người dùng thấy ngay có thể "Xem thêm".
+   Khi expanded, nút trôi xuống ngay dưới đoạn text. */
+.toggle-text-btn--inline {
+    position: absolute;
+    right: 1rem;
+    bottom: 0.6rem;
+    margin-top: 0;
+    padding: 0.35rem 0.85rem;
+    background: #fff;
+    color: var(--vl-pink-700);
+    border: 2px solid var(--vl-pink-200);
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(255, 107, 149, 0.15);
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.2s;
+    z-index: 2;
+}
+
+.toggle-text-btn--inline:hover {
+    background: var(--vl-pink-500);
+    color: #fff;
+    border-color: var(--vl-pink-600);
+    transform: translateY(-1px);
+}
+
+/* Khi transcript đang expanded → nút chuyển về dạng inline cố định dưới
+   đoạn text (không còn overlay). */
+.transcript-box .toggle-text-btn--inline:not(.toggle-text-btn--overlay) {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    color: var(--vl-pink-600);
+    border-color: transparent;
+    box-shadow: none;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.transcript-box .toggle-text-btn--inline:not(.toggle-text-btn--overlay):hover {
+    background: var(--vl-pink-50);
+    color: var(--vl-pink-700);
+    border-color: transparent;
+    transform: none;
+}
+
+.transcript-box:not(.has-overflow) .toggle-text-btn--inline {
+    position: static;
+    display: none;
+}
+
+.toggle-text-btn .toggle-label {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.toggle-text-btn i {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+    transform-origin: center;
+    display: inline-block;
+}
+
+/* Khi bấm mở rộng → icon xoay 180° (chevron-down trở thành chevron-up). */
+.toggle-text-btn[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+/* Fallback cho class-based rotation (giữ tương thích ngược). */
+.toggle-text-btn.expanded i {
+    transform: rotate(180deg);
+}
+
+/* Hộp transcript với khung dashed */
+.transcript-box {
+    position: relative;
+    background: var(--vl-pink-50);
+    border: 2px dashed var(--vl-pink-200);
+    border-radius: var(--vl-radius-md);
+    padding: 1rem 1.25rem;
+}
+
+/* ============== Structured Transcript Blocks ============== */
+/*
+   Trình bày transcript có cấu trúc (heading, bullet, definition, example,
+   table, note) thay vì plain text. Áp dụng cho nội dung render bởi macro
+   `render_block` trong templates/lesson.html.
+*/
+.transcript-structured {
+    color: var(--vl-ink);
+}
+
+.transcript-structured > * + * {
+    margin-top: 0.35rem;
+}
+
+/* Heading — nổi bật nhưng không quá lớn */
+.transcript-heading {
+    color: var(--vl-pink-700);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    margin: 0.5rem 0 0.2rem;
+}
+
+.transcript-heading--l1 {
+    font-size: 1.05rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px dashed var(--vl-pink-200);
+    margin-top: 0.75rem;
+}
+
+.transcript-heading--l2 {
+    font-size: 0.98rem;
+    color: var(--vl-pink-600);
+}
+
+.transcript-heading--l3 {
+    font-size: 0.92rem;
+    color: var(--vl-ink);
+}
+
+/* Bullet */
+.transcript-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.55;
+}
+
+.bullet-marker {
+    flex-shrink: 0;
+    width: 1.1rem;
+    text-align: center;
+    font-weight: 800;
+    color: var(--vl-pink-500);
+    line-height: 1.55;
+}
+
+.bullet-marker--check {
+    color: var(--vl-green);
+}
+
+.bullet-marker--dash {
+    color: var(--vl-pink-500);
+    font-weight: 800;
+}
+
+.bullet-text {
+    flex: 1;
+    color: var(--vl-ink);
+    white-space: pre-line;
+}
+
+/* Definition — thuật ngữ + giải thích */
+.transcript-definition {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.4rem 0.7rem;
+    background: #fff;
+    border-left: 3px solid var(--vl-pink-500);
+    border-radius: var(--vl-radius-sm);
+}
+
+.transcript-definition .term {
+    color: var(--vl-pink-700);
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+}
+
+.transcript-definition .def {
+    color: var(--vl-ink);
+    line-height: 1.5;
+}
+
+/* Example — callout với icon */
+.transcript-example {
+    background: linear-gradient(135deg, #fff7e0, #fff1cc);
+    border-radius: var(--vl-radius-md);
+    padding: 0.55rem 0.8rem;
+    border: 1px solid #ffd97a;
+}
+
+.example-label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #b86500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+}
+
+.example-text {
+    color: #5b3300;
+    line-height: 1.5;
+}
+
+.example-caption {
+    font-size: 0.85rem;
+    color: #8a4d00;
+    font-style: italic;
+    margin-top: 0.3rem;
+}
+
+/* Table */
+.transcript-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--vl-radius-md);
+    border: 1px solid var(--vl-pink-200);
+    background: #fff;
+}
+
+.transcript-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.transcript-table th,
+.transcript-table td {
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--vl-pink-100);
+}
+
+.transcript-table th {
+    background: var(--vl-pink-100);
+    color: var(--vl-pink-700);
+    font-weight: 800;
+}
+
+.transcript-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.transcript-table tbody tr:hover {
+    background: var(--vl-pink-50);
+}
+
+/* Note — đoạn văn bình thường */
+.transcript-note {
+    color: var(--vl-ink-soft);
+    line-height: 1.55;
+    margin: 0;
+    white-space: pre-line;
+}
+
+/* Source badge */
+.transcript-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--vl-ink-soft);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    border: 1px solid var(--vl-pink-200);
+}
+
+.transcript-source-badge i {
+    color: var(--vl-pink-500);
+    font-size: 0.8rem;
+}
+
+/* Fallback khi không có cấu trúc — giữ nguyên text nguyên bản */
+.transcript-fallback {
+    color: var(--vl-ink);
+    line-height: 1.7;
+}
+
+.transcript-fallback-p {
+    margin-bottom: 0.85rem;
+    line-height: 1.7;
+}
+
+.transcript-fallback-p:last-child {
+    margin-bottom: 0;
+}
+
+/* Gradient fade khi text bị thu gọn — chỉ áp dụng cho transcript-box */
+.transcript-box.has-overflow .transcript-fade {
+    opacity: 1;
+}
+
+.transcript-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 245, 247, 0) 0%,
+        var(--vl-pink-50) 90%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border-bottom-left-radius: var(--vl-radius-md);
+    border-bottom-right-radius: var(--vl-radius-md);
+}
+
+.transcript-box:not(.has-overflow) .collapsible-text {
+    max-height: none !important;
+    overflow: visible;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .collapsible-text.collapsed {
+        max-height: 7.2em;
+    }
+
+    .transcript-box {
+        padding: 0.85rem 1rem;
+    }
+}
+
 .error-state {
     background: #ffe0e6;
     border: 2px solid var(--vl-red);

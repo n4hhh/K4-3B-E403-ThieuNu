@@ -46,3 +46,8 @@ dist/
 # Local data (keep structure, ignore generated files)
 *.tmp
 *.bak
+
+# Private/local course data - NEVER COMMIT
+/data/lesson/
+/data/processed/
+/data/transcript_cache/
