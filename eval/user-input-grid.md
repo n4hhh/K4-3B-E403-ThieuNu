@@ -1,60 +1,77 @@
-# Lưới Đầu Vào Của Người Dùng (User Input Grid)
-
-Tài liệu thể hiện 5 chiều không gian đầu vào từ học viên khi tham gia phiên học **Teach Back (Chủ đề: Foundation - Transformer & Cơ chế Attention)** dựa trên dữ liệu thật từ `rag_handoff` (`transcript-04-clean.md` & `transcript-06-clean.md`).
-
----
-
-## 5 Chiều Đánh Giá (Dimensions)
-
-1. **Chunk bài giảng (5 chunks)**:
-   - Chunk 1: Phân biệt AI vs Machine Learning vs Deep Learning (`[T04-015]`, `[T06-027]`)
-   - Chunk 2: Lịch sử Symbolic AI & Mùa đông AI (`[T04-024]` - `[T04-027]`)
-   - Chunk 3: Deep Learning & Sức mạnh dữ liệu ImageNet (`[T04-030]` - `[T04-033]`)
-   - Chunk 4: Kiến trúc Transformer & Cơ chế Attention (`[T04-038]` - `[T04-040]`)
-   - Chunk 5: Bản chất xác suất & Vì sao LLM bịa (`[T01-019]`, `[T06-045]`)
-2. **Mức đúng/sai**: Đúng hoàn toàn / Đúng nhưng thiếu / Sai một phần / Sai nghiêm trọng (sai ngược bản chất).
-3. **Mức chi tiết**: Chi tiết có ví dụ (analogy) / Khái quát / Cụt lủn 1-2 từ / Tiếng lóng (slang).
-4. **Trong/ngoài bài**: Đúng phạm vi transcript / Liên quan nhưng ngoài bài / Hoàn toàn ngoài lề (tán gẫu, đầu tư).
-5. **Dạng input**: Tự giải thích bằng lời riêng / Copy nguyên văn transcript / Hỏi ngược lại agent / Tán gẫu.
+# User Input Grid — Teach Back Agent (Pink Panther) 🐾
+## Bài học: Day 1 Foundation — Transformer, Attention & LLM
+## Nguồn transcript: `data/vlearn-pack/transcript/transcript-04-clean.md` + `transcript-06-clean.md`
 
 ---
 
-## Ma Trận Bao Phủ (Coverage Matrix)
+## 5 Chiều Phân Tích Đầu Vào Người Học
 
-### Ma trận 1: Chunk Bài Giảng × Mức Đúng/Sai
-
-| Chunk Chủ Đề                         | Đúng hoàn toàn       | Đúng nhưng thiếu | Sai một phần                      | Sai nghiêm trọng (Crucial)              |
-| :----------------------------------- | :------------------- | :--------------- | :-------------------------------- | :-------------------------------------- |
-| **Chunk 1: AI vs ML vs DL**          | `case_01`, `case_02` | `case_15`        | [Gap]                             | [Gap]                                   |
-| **Chunk 2: Symbolic & Mùa đông**     | `case_03`, `case_04` | [Gap]            | `case_21`                         | [Gap]                                   |
-| **Chunk 3: Deep Learning & Data**    | `case_05`, `case_06` | [Gap]            | `case_13`                         | [Gap]                                   |
-| **Chunk 4: Transformer & Attention** | `case_07`, `case_08` | `case_14`        | [Gap]                             | `case_20` _(sai ngược RNN/Transformer)_ |
-| **Chunk 5: Bản chất LLM & Prompt**   | `case_09`, `case_10` | [Gap]            | `case_22` _(ngộ nhận logic 100%)_ | [Gap]                                   |
+| Chiều | Các mức | Mô tả |
+|---|---|---|
+| **Dim 1** Chunk chủ đề | T, A, C, P, R, Ev | **T**ransformer/RNN · **A**ttention & Multi-head · **C**ontext/Token · **P**arameter/RLHF · **R**einforcement/History · **Ev**aluation |
+| **Dim 2** Mức đúng/sai | ✅ / 🟡 / ❌ / 🔀 | Đúng hoàn toàn / Đúng nhưng thiếu / Sai hoàn toàn / Nhầm lẫn (đúng+sai lẫn) |
+| **Dim 3** Mức chi tiết | 💎 / 📋 / ✂️ | Chi tiết có ví dụ / Khái quát đủ ý / Cụt 1-2 từ |
+| **Dim 4** Phạm vi | 🎯 / 🔗 / 🌐 | Đúng phạm vi transcript / Liên quan nhưng ngoài transcript / Hoàn toàn ngoài bài |
+| **Dim 5** Dạng input | 💬 / 📋 / ❓ / 🎁 | Tự giải thích / Copy transcript verbatim / Hỏi ngược agent / Xin đáp án |
 
 ---
 
-### Ma trận 2: Mức Chi Tiết × Dạng Input
+## Ma Trận Coverage — Case ID theo 5 Chiều
 
-| Mức chi tiết              | Tự diễn đạt                                     | Copy transcript | Hỏi vặn/Hỏi ngược            | Lạc đề / Tán gẫu                                  |
-| :------------------------ | :---------------------------------------------- | :-------------- | :--------------------------- | :------------------------------------------------ |
-| **Chi tiết có ví dụ**     | `case_02` _(máy Casio)_, `case_05` _(ImageNet)_ | `case_23`       | `case_11` _(OpenAI 2015)_    | [Gap]                                             |
-| **Khái quát chuẩn**       | `case_01`, `case_04`, `case_08`, `case_09`      | [Gap]           | `case_12` _(thay thế coder)_ | `case_18` _(fine-tune LoRA)_                      |
-| **Cụt lủn / Vague**       | `case_14` _(1 từ)_, `case_15`, `case_24`        | [Gap]           | [Gap]                        | `case_17` _(mua cổ phiếu)_, `case_19` _(trà sữa)_ |
-| **Tiếng lóng / Than thở** | `case_16` _(ảo ma chả hiểu)_                    | [Gap]           | [Gap]                        | [Gap]                                             |
+| Case ID | Dim1 Chunk | Dim2 Đúng/Sai | Dim3 Chi tiết | Dim4 Phạm vi | Dim5 Dạng | Layer |
+|---|---|---|---|---|---|---|
+| **C01** | T (AI/ML/DL phân cấp) | ✅ Đúng hoàn toàn | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C02** | T (Transformer vs RNN) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C03** | C (Token) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C04** | C (Context window) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C05** | P (RLHF) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C06** | A (Multi-head) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C07** | C (Knowledge cutoff/RAG) | ✅ Đúng hoàn toàn | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C08** | C (Temperature/sampling) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C09** | Ev (Evaluation) | ✅ Đúng hoàn toàn | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C10** | T (AI Agent) | ✅ Đúng hoàn toàn | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | normal |
+| **C11** | T (Transformer origin) | ❌ Sai sự thật | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | source_of_truth |
+| **C12** | A (Implementation detail) | — N/A | ✂️ Cụt/hỏi | 🌐 Ngoài transcript | ❓ Hỏi ngược | source_of_truth |
+| **C13** | C (Context rot nguyên nhân) | 🔀 Thông tin ngoài | 📋 Khái quát | 🔗 Ngoài transcript | ❓ Hỏi ngược | source_of_truth |
+| **C14** | A (Attention mechanism) | 🟡 Đúng nhưng thiếu | ✂️ Cụt mơ hồ | 🎯 Trong bài | 💬 Tự giải | ambiguous_input |
+| **C15** | T (Transformer parallel) | 🟡 Đúng nhưng thiếu | ✂️ Cụt 1 câu | 🎯 Trong bài | 💬 Tự giải | ambiguous_input |
+| **C16** | T (LLM vs RNN) | 🔀 Đúng+sai lẫn | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | ambiguous_input |
+| **C17** | — (Benchmark model) | — N/A | ✂️ Hỏi trực tiếp | 🌐 Ngoài bài | ❓ Hỏi ngược | out_of_scope |
+| **C18** | C (Autoregressive) | — N/A | ✂️ Hỏi trực tiếp | 🎯 Trong bài | 🎁 Xin đáp án | out_of_scope |
+| **C19** | — (Git issue) | — N/A | ✂️ Hỏi trực tiếp | 🌐 Ngoài bài | ❓ Hỏi ngược | out_of_scope |
+| **C20** | T (LLM tuần tự/song song) | ❌ Sai kỹ thuật | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | domain_specific |
+| **C21** | R (AlphaGo) | ❌ Sai cơ chế | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | domain_specific |
+| **C22** | R (Symbolic AI) | ❌ Sai lịch sử | 📋 Khái quát | 🎯 Trong bài | 💬 Tự giải | domain_specific |
+| **C23** | A (Attention matrix) | ✅ Đúng hoàn toàn | 💎 Chi tiết | 🎯 Trong bài | 📋 Copy verbatim | edge |
+| **C24** | — (Phản hồi rỗng) | — N/A | ✂️ 1 từ | 🎯 Trong bài | 💬 Tự giải | edge |
 
 ---
 
-### Ma trận 3: Trong / Ngoài Phạm Vi Transcript
+## Phân Tích Coverage và Điểm Hổng
 
-- **Đúng phạm vi transcript** (17 cases): `case_01` -> `case_10`, `case_13`, `case_14`, `case_15`, `case_16`, `case_20`, `case_21`, `case_22`.
-- **Liên quan AI nhưng ngoài bài giảng** (4 cases): `case_11` _(OpenAI 2015)_, `case_12` _(AI thay thế lập trình)_, `case_18` _(fine-tune H100)_, `case_24` _(khen chung chung)_.
-- **Hoàn toàn ngoài lề** (2 cases): `case_17` _(chứng khoán NVIDIA)_, `case_19` _(rủ đi chơi)_.
-- **Gian lận học thuật** (1 case): `case_23` _(copy nguyên văn transcript)_.
+### Ô đã cover tốt ✅
+- Dim2 ✅ Đúng hoàn toàn × Dim5 💬 Tự giải → **C01–C10** (10 case)
+- Dim2 ❌ Sai hoàn toàn × Dim5 💬 Tự giải → **C11, C20, C21, C22** (4 case)
+- Dim5 📋 Copy verbatim → **C23** (1 case — edge)
+- Dim5 🎁 Xin đáp án → **C18** (1 case — out_of_scope)
+
+### Ô hổng (Gap) ⚠️
+| Dim1 | Dim2 | Gap |
+|---|---|---|
+| A (Attention) | ❌ Sai kỹ thuật | Chưa có case học viên nhầm attention = chú ý đơn giản kiểu sai |
+| Ev (Evaluation) | 🟡 Thiếu | Chưa có case học viên giải thích eval nhưng thiếu benchmark set |
+| P (Parameter) | ❌ Sai | Chưa có case nhầm parameter = số lớp mạng |
+| Dim5 ❓ Hỏi ngược | Dim2 ✅ Đúng | Thiếu case học viên hỏi ngược về chủ đề đúng scope (không hỏi để lấy đáp án) |
+
+> **Ghi chú**: 24 case hiện tại phủ đủ 4 lớp theo yêu cầu rubric (≥2 case/lớp). Gap trên dành cho golden set v2.
 
 ---
 
-## Các Lỗ Hổng Kiểm Thử Cần Bổ Sung Sau CP4 (Gap Analysis)
+## Thống Kê Phân Bố from_chatlog
 
-1. **[Gap 1]**: Học viên trả lời sai hoàn toàn ở Chunk 1 (ví dụ: Machine Learning là mạng internet).
-2. **[Gap 2]**: Học viên giải thích đúng khái niệm nhưng dùng từ ngữ chuyên sâu tiếng Anh học thuật khác xa giọng giảng viên.
-3. **[Gap 3]**: Học viên yêu cầu agent đưa ra câu trả lời trực tiếp ("Thôi nói luôn đáp án đi").
+| from_chatlog | Số case | Case IDs |
+|---|---|---|
+| TRUE (từ data thật) | 12 | C01, C02, C03, C05, C07, C08, C11, C14, C15, C16, C17, C18 |
+| FALSE (nhóm tự xây) | 12 | C04, C06, C09, C10, C12, C13, C19, C20, C21, C22, C23, C24 |
+
+> **Rubric**: ≥10 case phát triển từ data thật ✅ (đạt 12/24)

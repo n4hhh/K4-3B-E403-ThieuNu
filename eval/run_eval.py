@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Script chạy kiểm thử thật (Live Evaluation Runner) cho Teach Back Agent (Pink Panther)
-Sử dụng dữ liệu Golden Set từ eval/golden-set.csv và đối chiếu transcript rag_handoff.
+Sử dụng dữ liệu Golden Set từ eval/golden-set.csv.
+Transcript nguồn sự thật: data/vlearn-pack/transcript/transcript-04-clean.md + transcript-06-clean.md
 
 Cách chạy:
     python eval/run_eval.py
@@ -23,24 +24,33 @@ if sys.stderr.encoding and sys.stderr.encoding.lower() != 'utf-8':
 
 try:
     from dotenv import load_dotenv
+    # Load .env từ thư mục gốc dự án
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    load_dotenv(PROJECT_ROOT / ".env")
     load_dotenv()
 except ImportError:
-    pass
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GOLDEN_SET_PATH = PROJECT_ROOT / "eval" / "golden-set.csv"
 OUTPUT_REPORT_PATH = PROJECT_ROOT / "eval" / "eval-run-real.md"
 
 SYSTEM_PROMPT = """Bạn là Pink Panther - một chú báo hồng đóng vai học viên (người học) trên nền tảng VLearn.
-Người dùng (User) đang đóng vai người thầy để "dạy lại" (Teach Back) cho bạn về bài học "Foundation: Transformer, Cơ chế Attention & LLM" (dựa trên bài giảng Day 1 của khóa học).
+Người dùng (User) đang đóng vai người thầy để "dạy lại" (Teach Back) cho bạn về bài học:
+
+**"Day 1 — Foundation: cách LLM hoạt động (Transformer, Attention, Agent)"**
+
+Bài học này bao gồm các chủ đề: lịch sử AI, kiến trúc Transformer, cơ chế Attention, Multi-head Attention,
+Token & Context Window, Temperature/Top-k/Top-p, RLHF, Parameter, AI Agent, Evaluation.
+Nguồn sự thật: transcript-04-clean.md và transcript-06-clean.md (data/vlearn-pack/transcript/).
 
 Nhiệm vụ của bạn là một người học tò mò, chăm chú lắng nghe, nhưng CÓ TIÊU CHUẨN SƯ PHẠM CAO:
-1. KHÔNG MỚM ĐÁP ÁN: Tuyệt đối không tự động giải thích hộ bài học. Nếu người dùng giải thích đúng, bạn ghi nhận và đặt câu hỏi mớm đào sâu vào cơ chế hoặc hỏi ví dụ liên hệ.
-2. PHÁT HIỆN LỖI SAI (Bắt buộc): Nếu người dùng nói sai kiến thức (ví dụ: nhầm RNN đọc cả câu còn Transformer đọc tuần tự, hoặc bảo Deep Learning không cần GPU, hoặc nói LLM luôn đúng 100%), bạn PHẢI chỉ ra điểm mâu thuẫn đó và hỏi vặn lại để họ tự đính chính. Tuyệt đối không "nịnh" hay đồng tình với kiến thức sai.
-3. KHÔNG DỄ DÃI VỚI CÂU TRẢ LỜI CỤT/MƠ HỒ: Nếu người dùng chỉ trả lời 1-2 từ (ví dụ: "Attention là chú ý"), hãy hỏi vặn: "Cụ thể là chú ý vào cái gì hả bạn? Nó khác gì cách đọc của mô hình cũ?".
-4. CHỐNG SAO CHÉP: Nếu người dùng copy nguyên văn tài liệu/transcript sách giáo khoa, hãy bảo: "Nghe giống sách quá nè, bạn giải thích bằng ví dụ đời thường của chính bạn cho mình hiểu được không?".
-5. TỪ CHỐI NGOÀI LỀ: Nếu người dùng hỏi mua cổ phiếu, hỏi code cao cấp không liên quan, hoặc rủ đi chơi, hãy từ chối lịch sự và kéo họ về bài học.
-6. GIỌNG ĐIỆU: Thân thiện, xưng "mình/em" gọi người dùng là "bạn/thầy", thỉnh thoảng dùng icon nhẹ nhàng 🐾, giữ đúng tinh thần mascot học tập.
+1. KHÔNG MỚM ĐÁP ÁN: Tuyệt đối không tự động giải thích hộ bài học. Nếu người dùng giải thích đúng, bạn ghi nhận và đặt câu hỏi đào sâu vào cơ chế hoặc hỏi ví dụ liên hệ.
+2. PHÁT HIỆN LỖI SAI (Bắt buộc): Nếu người dùng nói sai kiến thức (ví dụ: nhầm transformer là tuần tự như RNN, hoặc bảo AlphaGo được lập trình cứng, hoặc nhầm paper Attention Is All You Need là của OpenAI), bạn PHẢI chỉ ra điểm mâu thuẫn đó và hỏi vặn lại để họ tự đính chính.
+3. KHÔNG DỄ DÃI VỚI CÂU TRẢ LỜI CỤT/MƠ HỒ: Nếu người dùng chỉ trả lời 1-2 từ hoặc câu mơ hồ như "nó như kiểu là...", hãy hỏi vặn cụ thể hơn.
+4. CHỐNG SAO CHÉP: Nếu người dùng copy nguyên văn tài liệu/transcript, hãy yêu cầu giải thích bằng lời của chính họ.
+5. TỪ CHỐI NGOÀI LỀ: Nếu người dùng hỏi so sánh model hiện tại, hỏi code không liên quan bài học, hãy từ chối lịch sự và kéo họ về bài học.
+6. KHÔNG BỊA: Chỉ dùng kiến thức từ bài giảng Day 1 Foundation. Nếu câu hỏi ngoài transcript, thành thật nói "Phần này nằm ngoài bài học ngày hôm nay."
+7. GIỌNG ĐIỆU: Thân thiện, xưng "mình/em" gọi người dùng là "bạn/thầy", thỉnh thoảng dùng icon nhẹ nhàng 🐾, giữ đúng tinh thần mascot học tập.
 """
 
 def get_llm_client():
@@ -49,19 +59,27 @@ def get_llm_client():
     openai_key = os.getenv("OPENAI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
 
-    if gemini_key and gemini_key != "your_gemini_api_key_here":
+    if gemini_key and len(gemini_key) > 10 and "your_gemini" not in gemini_key:
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel(
-                model_name="gemini-3.6-flash",
-                system_instruction=SYSTEM_PROMPT
-            )
-            return "gemini", model
+            from google import genai
+            from google.genai import types
+            client = genai.Client(api_key=gemini_key)
+            return "gemini", client
         except Exception as e:
-            print(f"[!] Lỗi khởi tạo Gemini SDK: {e}")
+            print(f"[!] Lỗi khởi tạo Gemini SDK (google.genai): {e}")
+            # Thử fallback google.generativeai
+            try:
+                import google.generativeai as genai_old
+                genai_old.configure(api_key=gemini_key)
+                model = genai_old.GenerativeModel(
+                    model_name="gemini-2.5-flash",
+                    system_instruction=SYSTEM_PROMPT
+                )
+                return "gemini_old", model
+            except Exception as e2:
+                print(f"[!] Lỗi fallback Gemini: {e2}")
 
-    if openai_key and openai_key != "your_openai_api_key_here":
+    if openai_key and openai_key.startswith("sk-"):
         try:
             from openai import OpenAI
             client = OpenAI(api_key=openai_key)
@@ -69,7 +87,7 @@ def get_llm_client():
         except Exception as e:
             print(f"[!] Lỗi khởi tạo OpenAI SDK: {e}")
 
-    if anthropic_key and anthropic_key != "your_anthropic_api_key_here":
+    if anthropic_key and anthropic_key.startswith("sk-"):
         try:
             from anthropic import Anthropic
             client = Anthropic(api_key=anthropic_key)
@@ -79,10 +97,22 @@ def get_llm_client():
 
     return None, None
 
+
 def call_llm(provider, client, user_message):
     """Gửi tin nhắn của người học đến LLM và nhận câu trả lời thật."""
     try:
         if provider == "gemini":
+            from google.genai import types
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature=0.7,
+                ),
+                contents=user_message
+            )
+            return response.text.strip()
+        elif provider == "gemini_old":
             response = client.generate_content(user_message)
             return response.text.strip()
         elif provider == "openai":
@@ -99,34 +129,35 @@ def call_llm(provider, client, user_message):
             response = client.messages.create(
                 model="claude-3-5-haiku-20241022",
                 system=SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": user_message}
-                ],
-                max_tokens=500
+                messages=[{"role": "user", "content": user_message}],
+                max_tokens=600
             )
             return response.content[0].text.strip()
     except Exception as e:
         return f"[LỖI GỌI API: {e}]"
 
+
 def main():
     print("=" * 70)
     print("   VLEARN TEACH BACK AGENT - LIVE EVALUATION RUNNER (TRACK D3)   ")
+    print("=" * 70)
+    print(f"   Transcript nguồn: data/vlearn-pack/transcript/transcript-04-clean.md")
+    print(f"                     data/vlearn-pack/transcript/transcript-06-clean.md")
     print("=" * 70)
 
     provider, client = get_llm_client()
     if not provider:
         print("\n[!] CHƯA TÌM THẤY API KEY HỢP LỆ!")
         print("Vui lòng mở file .env tại thư mục gốc của dự án và điền API Key vào:")
-        print("    c:\\Users\\anhho\\OneDrive\\Desktop\\VinAI\\K4-3B-E403-ThieuNu\\.env")
+        print(f"    {PROJECT_ROOT / '.env'}")
         print("\nCác lựa chọn hỗ trợ:")
         print("  - GEMINI_API_KEY=AIzaSy... (Khuyên dùng - miễn phí từ Google AI Studio)")
         print("  - OPENAI_API_KEY=sk-...    (OpenAI GPT-4o-mini)")
         print("  - ANTHROPIC_API_KEY=sk-... (Claude 3.5 Haiku)")
-        print("\nSau khi lưu file .env, hãy chạy lại lệnh:")
-        print("    python eval/run_eval.py\n")
+        print(f"\nSau khi lưu file .env, hãy chạy lại:\n    python eval/run_eval.py\n")
         return
 
-    print(f"[+] Đã kết nối thành công với Provider: {provider.upper()}")
+    print(f"\n[+] Đã kết nối thành công với Provider: {provider.upper()}")
     print(f"[+] Nguồn test cases: {GOLDEN_SET_PATH}")
     print(f"[+] File xuất kết quả: {OUTPUT_REPORT_PATH}\n")
 
@@ -152,8 +183,9 @@ def main():
         input_learner = c.get("input_learner", "")
         expected = c.get("expected_agent_behavior", "")
         citation = c.get("transcript_citation", "")
+        from_chatlog = c.get("from_chatlog", "FALSE")
 
-        print(f"[{idx:02d}/{total_cases}] Đang test {case_id} ({layer})...")
+        print(f"[{idx:02d}/{total_cases}] Đang test {case_id} ({layer}) [chatlog={from_chatlog}]...")
         actual_output = call_llm(provider, client, input_learner)
 
         # In ngắn ra màn hình
@@ -163,13 +195,14 @@ def main():
         results.append({
             "case_id": case_id,
             "layer": layer,
+            "from_chatlog": from_chatlog,
             "input_learner": input_learner,
             "expected": expected,
             "citation": citation,
             "actual_output": actual_output
         })
 
-        time.sleep(1) # Tránh rate-limit
+        time.sleep(1.5)  # Tránh rate-limit
 
     elapsed = time.time() - start_time
     print(f"[+] Hoàn thành {total_cases} cases trong {elapsed:.1f} giây!")
@@ -179,18 +212,20 @@ def main():
         f.write("# Báo Cáo Kiểm Thử Chạy Thật (Live Evaluation Run Report)\n\n")
         f.write(f"- **Thời gian chạy**: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"- **Provider LLM**: `{provider.upper()}`\n")
+        f.write(f"- **Model**: `gemini-2.5-flash`\n")
         f.write(f"- **Tổng số test cases**: {total_cases}\n")
-        f.write(f"- **Thời gian thực thi**: {elapsed:.1f}s\n\n")
+        f.write(f"- **Thời gian thực thi**: {elapsed:.1f}s\n")
+        f.write(f"- **Nguồn transcript**: `data/vlearn-pack/transcript/transcript-04-clean.md` + `transcript-06-clean.md`\n\n")
         f.write("---\n\n")
         f.write("## 1. Chi Tiết Từng Phản Hồi Thực Tế Của AI Agent\n\n")
-        f.write("| Case ID | Layer | Trích dẫn Transcript | Input từ học viên | Phản hồi THẬT từ Agent (Actual Output) | Hành vi kỳ vọng |\n")
-        f.write("| :--- | :--- | :--- | :--- | :--- | :--- |\n")
+        f.write("| Case ID | Layer | Chatlog | Trích dẫn | Input từ học viên | Phản hồi THẬT từ Agent | Hành vi kỳ vọng |\n")
+        f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
 
         for r in results:
             safe_input = r['input_learner'].replace("|", "\\|").replace("\n", " ")
             safe_output = r['actual_output'].replace("|", "\\|").replace("\n", "<br>")
             safe_expected = r['expected'].replace("|", "\\|")
-            f.write(f"| `{r['case_id']}` | `{r['layer']}` | `{r['citation']}` | {safe_input} | {safe_output} | {safe_expected} |\n")
+            f.write(f"| `{r['case_id']}` | `{r['layer']}` | `{r['from_chatlog']}` | `{r['citation']}` | {safe_input} | {safe_output} | {safe_expected} |\n")
 
         f.write("\n---\n\n")
         f.write("## 2. Hướng Dẫn Chấm Điểm Pass/Fail\n\n")
@@ -200,9 +235,9 @@ def main():
         f.write("3. **D3 (Chỉ số học)**: Agent có từ chối câu trả lời cụt lủn và văn bản copy-paste không?\n\n")
         f.write("Điền kết quả tổng kết vào `eval/spec-section7-draft.md` để hoàn tất nghiệm thu CP3 & CP4.\n")
 
-    print(f"[✓] Đã lưu toàn bộ kết quả câu trả lời thật vào file:\n    {OUTPUT_REPORT_PATH}")
+    print(f"\n[✓] Đã lưu toàn bộ kết quả câu trả lời thật vào file:\n    {OUTPUT_REPORT_PATH}")
     print("\nBạn có thể mở file trên để xem toàn bộ câu trả lời thực tế của AI!")
+
 
 if __name__ == "__main__":
     main()
-

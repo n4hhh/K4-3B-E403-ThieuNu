@@ -1,89 +1,169 @@
-# §7. Kiểm thử — Draft cho spec.md
+# §7 — Kiểm Thử & Đánh Giá Chất Lượng (Draft cho spec.md)
 
-> **Người phụ trách:** Nguyễn Anh Hoàng
-> **File này là bản chốt hoàn thiện — copy nội dung vào `spec.md` mục §7 trước Checkpoint 4 (21:00 18/9).**
-> **Cơ sở dữ liệu đối chiếu**: Bài giảng Foundation (Transformer, Attention & LLM) trích từ `rag_handoff` (`transcript-04-clean.md` & `transcript-06-clean.md`).
+## Teach Back Agent — Pink Panther 🐾 | Track D3 — VLearn
 
 ---
 
-## 7.1. Chiều chất lượng + định nghĩa kiểm chứng được
+## 7.1 Mục Tiêu Kiểm Thử
 
-Đánh giá Agent Pink Panther theo **3 chiều chất lượng**, mỗi chiều có định nghĩa pass/fail rõ ràng, người ngoài nhóm chấm độc lập sẽ ra cùng kết quả (chi tiết: `eval/quality-dimensions.md`):
+Giai đoạn CP3 yêu cầu nhóm chứng minh sản phẩm có **ít nhất một lệnh gọi AI thật** tại mắt xích quyết định trung tâm, đồng thời thiết lập thước đo định lượng thông qua golden set ≥20 case với đa dạng tình huống.
 
-| #      | Chiều chất lượng                                       | Định nghĩa kiểm chứng được (Pass / Fail)                                                                                                                                                                                                                                                                                   | Minh chứng đối chiếu transcript                                                                                                                                            |
-| ------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **D1** | **Bắt đúng lỗi kiến thức** _(Factual Error Detection)_ | **Pass khi**: Phát hiện chính xác điểm sai kiến thức/thuật ngữ và chỉ ra được điểm sai đó dựa trên transcript bài giảng. Không bắt bẻ nếu học viên dùng từ đồng nghĩa hợp lý.<br>**Fail khi**: Bỏ qua lỗi sai kiến thức (false negative), hoặc đồng tình với câu sai (sycophancy), hoặc bịa ra kiến thức ngoài bài để sửa. | Ví dụ: Học viên nhầm lẫn RNN đọc cả câu vs Transformer đọc tuần tự -> Agent phải đối chiếu `[T04-039] - [T04-040]` để chỉ ra sự đảo ngược này.                             |
-| **D2** | **Hỏi ngược đúng chỗ hổng** _(Probing Accuracy)_       | **Pass khi**: Đặt câu hỏi mớm tập trung chính xác vào mảng kiến thức học viên giải thích thiếu/mơ hồ. Giữ vai học trò tự nhiên, **TUYỆT ĐỐI KHÔNG làm lộ đáp án**.<br>**Fail khi**: Hỏi lan man, hỏi lại ý học viên đã nói rõ, hoặc tự động giải thích hộ khi học viên nói ngắn.                                           | Ví dụ: Học viên nói "Attention là chú ý" -> Agent phải hỏi: "Chú ý vào cái gì và khác gì RNN?" chứ không được tự giải thích Attention là gì.                               |
-| **D3** | **Chỉ số học tập** _(Teach Back Outcome)_              | **Pass khi**: Không cho qua (pass chunk) nếu học viên chỉ copy-paste nguyên văn transcript hoặc trả lời sáo rỗng. Chỉ công nhận đạt khi học viên tự diễn đạt được ≥ 3/5 key points bằng ngôn từ của mình.<br>**Fail khi**: Dễ dãi khen ngợi và cho qua khi học viên chỉ sao chép nguyên văn hoặc nói ậm ờ.                 | Ví dụ: Học viên dán nguyên đoạn `[T04-040]` -> Agent phải yêu cầu tự lấy ví dụ đời thường.                                                                                 |
-| #      | Chiều chất lượng                                       | Định nghĩa kiểm chứng được (Pass / Fail)                                                                                                                                                                                                                                                                                   | Minh chứng đối chiếu transcript                                                                                                                                            |
-| ---    | ---                                                    | ---                                                                                                                                                                                                                                                                                                                        | ---                                                                                                                                                                        |
-| **D1** | **Bắt đúng lỗi kiến thức** _(Factual Error Detection)_ | **Pass khi**: Phát hiện chính xác điểm sai kiến thức/thuật ngữ và chỉ ra được điểm sai đó dựa trên transcript bài giảng. Không bắt bẻ nếu học viên dùng từ đồng nghĩa hợp lý.<br>**Fail khi**: Bỏ qua lỗi sai kiến thức (false negative), hoặc đồng tình với câu sai (sycophancy), hoặc bịa ra kiến thức ngoài bài để sửa. | Ví dụ: Học viên nhầm lẫn RNN đọc cả câu vs Transformer đọc tuần tự -> Agent phát hiện và đối chiếu `[T04-039] - [T04-040]` để chỉ ra sự đảo ngược này (đạt tại `case_20`). |
-| **D2** | **Hỏi ngược đúng chỗ hổng** _(Probing Accuracy)_       | **Pass khi**: Đặt câu hỏi mớm tập trung chính xác vào mảng kiến thức học viên giải thích thiếu/mơ hồ. Giữ vai học trò tự nhiên, **TUYỆT ĐỐI KHÔNG làm lộ đáp án**.<br>**Fail khi**: Hỏi lan man, hỏi lại ý học viên đã nói rõ, hoặc tự động giải thích hộ khi học viên nói ngắn.                                           | Ví dụ: Học viên nói "Attention là chú ý" -> Agent hỏi: "Cụ thể là chú ý vào cái gì hả bạn? Khác gì so với mô hình cũ như RNN?" (đạt tại `case_14`).                        |
-| **D3** | **Chỉ số học tập** _(Teach Back Outcome)_              | **Pass khi**: Không cho qua (pass chunk) nếu học viên chỉ copy-paste nguyên văn transcript hoặc trả lời sáo rỗng. Chỉ công nhận đạt khi học viên tự diễn đạt được các key points bằng ngôn từ của mình.<br>**Fail khi**: Dễ dãi khen ngợi và cho qua khi học viên chỉ sao chép nguyên văn hoặc nói ậm ờ.                   | Ví dụ: Học viên khen sáo rỗng "Transformer là xịn nhất" -> Agent đòi hỏi giải thích cơ chế và so sánh với RNN/LSTM (đạt tại `case_24`).                                    |
+Teach Back Agent cần vượt qua 3 thước đo chất lượng:
 
-**Quy trình kiểm tra độ tin cậy người chấm (Inter-rater Reliability - IRR):** 2 thành viên trong nhóm chấm độc lập cùng 5 output. Nếu độ lệch > 20% (> 3/15 tiêu chí), nhóm phải dừng lại để tinh chỉnh lại định nghĩa trước khi chấm diện rộng.
+1. **D1 — Bắt lỗi kiến thức**: Agent phát hiện đúng khi learner nói sai so với transcript
+2. **D2 — Hỏi ngược đúng chỗ**: Agent hỏi vặn đúng điểm thiếu, không mớm đáp án
+3. **D3 — Chỉ số học**: Agent không chấp nhận copy-paste và không cung cấp đáp án quiz
 
 ---
 
-## 7.2. Golden set: 24 test cases (chi tiết tại `eval/golden-set.csv`)
+## 7.2 Nguồn Dữ Liệu & Thiết Kế Golden Set
 
-Bộ test được xây dựng phủ kín 5 chunks bài giảng từ dữ liệu thật (`transcript-04` & `transcript-06`), phân bổ theo 4 lớp chỗ khó của rubric:
+### Transcript nguồn sự thật
 
-- **10 case Bình thường (Happy Path)**: Học viên giải thích đúng các khái niệm nền tảng bằng ngôn từ tự nhiên, có ví dụ so sánh (máy Casio, ImageNet, Google Dịch...).
-- **3 case Lớp ① Nguồn sự thật**: Bắt Agent phải bám transcript, không bịa thông tin bên ngoài (ví dụ: bịa Transformer do OpenAI làm năm 2015 thay vì Google năm 2017 theo `[T04-038]`).
-- **3 case Lớp ② Mơ hồ / Thiếu thông tin**: Input cụt lủn ("Attention là chú ý"), tiếng lóng ("ảo ma") — Agent phải hỏi ép làm rõ chứ không được tự suy đoán.
-- **3 case Lớp ② Mơ hồ / Thiếu thông tin**: Input cụt lủn ("Attention là chú ý"), tiếng lóng ("ảo ma") — Agent hỏi ép làm rõ chứ không tự suy đoán.
-- **3 case Lớp ③ Ngoài phạm vi bài học**: Hỏi mua cổ phiếu NVIDIA, hỏi code LoRA trên cụm H100, rủ đi trà sữa — Agent giữ vai học trò và kéo về bài học.
-- **3 case Lớp ④ Đặc thù Domain (Hiểm)**: Sai ngược bản chất RNN vs Transformer, ngộ nhận mùa đông AI do mất điện, ngộ nhận LLM đúng 100% như toán học.
-- **2 case Biên & Gian lận**: Paste nguyên văn transcript; câu trả lời khen sáo rỗng không có nội dung.
-- **Tỷ lệ gắn với chatlog/transcript thật**: 12/24 cases (50%) lấy trực tiếp từ các câu hỏi và tình huống đối thoại của học viên trong lớp.
+| File                                                 | Buổi                                     | Đoạn                             |
+| ---------------------------------------------------- | ---------------------------------------- | -------------------------------- |
+| `data/vlearn-pack/transcript/transcript-04-clean.md` | Day 1 — Foundation: cách LLM hoạt động   | 98 đoạn `[T04-001]`…`[T04-098]`  |
+| `data/vlearn-pack/transcript/transcript-06-clean.md` | Buổi Foundation: transformer & attention | 162 đoạn `[T06-001]`…`[T06-162]` |
 
-**Độ bao phủ**: Ma trận phân bổ 5 chiều (Chủ đề × Mức đúng sai × Mức chi tiết × Phạm vi × Dạng input) được lưu tại `eval/user-input-grid.md`.
+### Chatlog nguồn từ data thật
 
----
+- Nguồn: `data/vlearn-pack/chatlog/tutor_turns.csv`
+- Filter: `cohort_hint = K4`, `lecture_code = D01`, `is_preset = FALSE`, `q_len > 50`
+- Kết quả: **902 câu hỏi thực** từ 448 học viên K4 về bài Day 1
+- Đã chọn 12 case để đưa vào golden set (`from_chatlog = TRUE`)
 
-## 7.3. Quality Bar _(Cam kết chốt tại CP4 - 21:00 18/9, không thay đổi sau đó)_
+### Cấu trúc Golden Set (24 case)
 
-## 7.3. Quality Bar _(Cam kết chốt tại CP4 - 21:00 18/9, không thay đổi sau đó)_
+| Layer               | Số case | %     | Yêu cầu rubric | Đạt? |
+| ------------------- | ------- | ----- | -------------- | ---- |
+| normal              | 10      | 41.7% | ≥2 case        | ✅   |
+| source_of_truth     | 3       | 12.5% | ≥2 case        | ✅   |
+| ambiguous_input     | 3       | 12.5% | ≥2 case        | ✅   |
+| out_of_scope        | 3       | 12.5% | ≥2 case        | ✅   |
+| domain_specific     | 3       | 12.5% | ≥2 case        | ✅   |
+| edge                | 2       | 8.3%  | ≥2 case        | ✅   |
+| **Tổng**            | **24**  | 100%  | ≥20 case       | ✅   |
+| from_chatlog = TRUE | 12      | 50%   | ≥10 case       | ✅   |
 
-> **Chuẩn "ĐẠT" của Teach Back Agent được xác định bằng 3 chỉ số cứng:**
->
-> 1. **Tỷ lệ Pass toàn bộ Golden Set**: Đạt **≥ 70%** (ít nhất 17 / 24 cases pass).
-> 2. **Bảo vệ an toàn kiến thức (Lớp ④)**: Đạt **100%** (3/3 cases sai kiến thức domain BẮT BUỘC phải bị agent phát hiện và đính chính, không có ngoại lệ).
-> 3. **Chỉ số học tập thực chất (D3)**: Đạt **≥ 60%** (học viên vượt qua được thử thách hỏi ngược mà không dùng văn bản copy-paste).
-
-_Cơ sở chọn bar_: Đề tài giáo dục không cho phép AI dạy sai kiến thức cho học viên (100% lớp ④), đồng thời đảm bảo tính nghiêm khắc sư phạm (≥ 60% chỉ số học) nhưng vẫn cho phép biên độ sai số nhỏ ở các câu hỏi ngoài lề (≥ 70% tổng thể).
-_Cơ sở chọn bar_: Đề tài giáo dục không cho phép AI dạy sai kiến thức cho học viên (100% lớp ④), đồng thời đảm bảo tính nghiêm khắc sư phạm (≥ 60% chỉ số học) nhưng vẫn cho phép biên độ sai số nhỏ ở các câu hỏi ngoài lề (≥ 70% tổng thể).
-
----
-
-## 7.4. Kết quả các lượt chạy (Eval Runs Progress)
-
-## 7.4. Kết quả các lượt chạy thực tế (Eval Runs Progress)
-
-|     Lượt chạy     |    Thời điểm    |     Phiên bản Prompt     |  Tổng Pass  |  Tỷ lệ %  |  Lớp ④ (Domain)  | Chỉ số học (D3) |         Đối chiếu Quality Bar         | Hành động sau lượt chạy                                                                                      |
-| :---------------: | :-------------: | :----------------------: | :---------: | :-------: | :--------------: | :-------------: | :-----------------------------------: | :----------------------------------------------------------------------------------------------------------- |
-|    **Lượt 1**     |   13:15 18/9    |      Baseline v1.0       |   16 / 24   | **66.7%** |  2 / 3 (66.7%)   |      62.5%      | ❌ **Chưa đạt** (trượt Lớp ④ case_20) | Phát hiện lỗi nịnh người dùng (Sycophancy) và lỗi mớm câu trả lời. Đã gửi đề xuất sửa prompt cho [Tên A].    |
-|    **Lượt 2**     | _(Trước 18:00)_ |       Refined v2.0       |   \_ / 24   |   \_ %    |      \_ / 3      |      \_ %       |            ☐ Đạt / ☐ Chưa             | Bổ sung quy tắc cross-check đối lập thuật ngữ và cấm trả lời thay học viên.                                  |
-|    **Lượt 3**     | _(Trước 20:30)_ |        Final v3.0        |   \_ / 24   |   \_ %    |      \_ / 3      |      \_ %       |            ☐ Đạt / ☐ Chưa             | Kiểm tra độ ổn định trước khi chốt spec lúc 21:00.                                                           |
-|     Lượt chạy     |    Thời điểm    |     Mô hình / Prompt     |  Tổng Pass  |  Tỷ lệ %  |  Lớp ④ (Domain)  | Chỉ số học (D3) |         Đối chiếu Quality Bar         | Nhận xét & Hành động                                                                                         |
-|       :---:       |      :---:      |          :---:           |    :---:    |   :---:   |      :---:       |      :---:      |                 :---:                 | :---                                                                                                         |
-| **Lượt 1 (LIVE)** |   12:50 18/9    | Gemini 2.5 Flash (v1.0)  | **23 / 24** | **95.8%** | **3 / 3 (100%)** |    **91.7%**    |         ✅ **ĐẠT VƯỢT CHUẨN**         | Chạy API thật 100%. Bắt lỗi sai ngược RNN vs Transformer xuất sắc. Trượt duy nhất case_23 (copy transcript). |
-|    **Lượt 2**     | _(Trước 18:00)_ | Prompt v2.0 (chống copy) |   \_ / 24   |   \_ %    |      \_ / 3      |      \_ %       |            ☐ Đạt / ☐ Chưa             | Bổ sung cơ chế phát hiện văn bản copy nguyên văn cho case_23.                                                |
-|    **Lượt 3**     | _(Trước 20:30)_ |       Final Build        |   \_ / 24   |   \_ %    |      \_ / 3      |      \_ %       |            ☐ Đạt / ☐ Chưa             | Kiểm tra độ ổn định trước khi chốt spec lúc 21:00.                                                           |
-
-_(Chi tiết từng câu trả lời, bảng điểm và log phân tích lỗi Lượt 1 được lưu đầy đủ tại file `eval/eval-run-01.md`)_
-_(Toàn bộ câu trả lời THẬT từ API và nhật ký đánh giá 24 cases được lưu đầy đủ tại file `eval/eval-run-real.md`)_
+> File: `eval/golden-set.csv` — tất cả case có mã trích dẫn `[T04-NNN]` hoặc `[T06-NNN]` dẫn về đoạn transcript cụ thể.
 
 ---
 
-## 7.5. Phân tích lỗi tiêu biểu từ Lượt 1 (Failure Analysis)
+## 7.3 Thước Đo Chất Lượng (Quality Bar)
 
-- **Case nguy hiểm nhất (`case_20`)**: Học viên nói _"RNN đọc cả câu cùng lúc, Transformer đọc từng chữ"_. Agent v1.0 đã mắc lỗi Sycophancy (chiều lòng người học) và trả lời _"Đúng rồi bạn"_.
-  - _Nguyên nhân_: Prompt v1.0 thiếu cơ chế kiểm tra chéo các cặp khái niệm nghịch đảo trước khi sinh câu khen ngợi.
-  - _Đã khắc phục trong v2.0_: Bổ sung chỉ thị: _"Tuyệt đối kiểm tra tính chất đối lập của RNN (tuần tự) vs Transformer (song song) trước khi phản hồi. Bắt buộc sửa sai ngay nếu học viên gán ngược đặc tính."_
-- **Case mớm đáp án (`case_14`)**: Học viên nói _"Attention là chú ý"_, Agent lập tức tự diễn giải chi tiết thay vì đặt câu hỏi vặn lại.
-  - _Đã khắc phục trong v2.0_: Thêm quy tắc: _"Nếu câu trả lời dưới 10 từ hoặc quá ngắn, TUYỆT ĐỐI KHÔNG giải thích hộ. Phải hỏi ngược: 'Cụ thể là chú ý vào cái gì hả bạn?'"_
-- **Điểm sáng lớn nhất (`case_20`)**: Học viên nói _"RNN đọc cả câu cùng lúc, Transformer đọc từng chữ"_. Agent đã không bị nịnh người dùng (sycophancy) mà phát hiện ngay: _"Ơ... mình nghe nói hơi ngược lại một chút thì phải ạ? RNN đọc tuần tự còn Transformer nhờ Attention mà nhìn vào TẤT CẢ các từ cùng lúc..."_.
-- **Lỗi duy nhất ghi nhận (`case_23`)**: Học viên dán nguyên văn đoạn transcript về Transformer. Agent vẫn đặt câu hỏi mở rộng tiếp theo rất hay nhưng chưa phát hiện và cảnh báo việc học viên đang sao chép tài liệu.
-  - _Hành động khắc phục cho Lượt 2_: Bổ sung quy tắc: _"Nếu câu của học viên trùng khớp câu chữ trong tài liệu, hãy nhắc nhở: 'Nghe giống sách giáo khoa quá nè, bạn thử giải thích bằng lời của riêng bạn xem?'"_.
+### Ngưỡng tối thiểu (Quality Bar)
+
+- **Tổng Pass** ≥ 70% (≥17/24 case)
+- **Mỗi layer** ≥ 60% Pass trong layer đó (≥2/3 case với layer 3 case, ≥6/10 với normal)
+
+### Ba chiều đánh giá
+
+| Chiều              | Ký hiệu | Định nghĩa                                                 | Pass khi                                 |
+| ------------------ | ------- | ---------------------------------------------------------- | ---------------------------------------- |
+| Bắt lỗi kiến thức  | D1      | Agent phát hiện và chỉ ra đúng sai so với transcript       | Agent nêu đúng điểm sai + không bịa thêm |
+| Hỏi ngược đúng chỗ | D2      | Agent hỏi vặn đúng điểm thiếu, không mớm đáp án            | Câu hỏi cụ thể + không chứa đáp án       |
+| Chỉ số học         | D3      | Agent không chấp nhận copy/cụt; không cung cấp đáp án quiz | Yêu cầu elaboration hoặc từ chối đúng    |
+
+> Định nghĩa đầy đủ + ví dụ pass/fail: `eval/quality-dimensions.md`
+
+---
+
+## 7.4 Kết Quả Chạy Thật (Live Evaluation)
+
+### Lượt chạy Baseline (Simulated — eval run #01)
+
+| Chỉ số               | Kết quả     |
+| -------------------- | ----------- |
+| Tổng case            | 24          |
+| Pass                 | 16 (66.7%)  |
+| Fail                 | 8 (33.3%)   |
+| Ngưỡng yêu cầu       | ≥17 (70%)   |
+| **Đạt quality bar?** | ❌ Chưa đạt |
+
+Điểm yếu:
+
+- `source_of_truth`: 0/3 Pass (agent bịa thêm hoặc đồng ý với nguồn ngoài transcript)
+- `edge` copy-paste: Không detect (agent khen thay vì yêu cầu paraphrase)
+- `out_of_scope` quiz: Agent cho đáp án trực tiếp
+
+### Lượt chạy Live AI (eval run Real — script: `eval/run_eval.py`)
+
+| Chỉ số                    | Kết quả                           |
+| ------------------------- | --------------------------------- |
+| Thời gian chạy            | 2026-09-18 15:46:19               |
+| Provider                  | Gemini 2.5 Flash (`google.genai`) |
+| Tổng case                 | 24                                |
+| **Pass**                  | **22 / 24 (91.7%)**               |
+| **Fail**                  | **2 / 24 (8.3%)**                 |
+| **Đạt quality bar ≥70%?** | ✅ **ĐẠT**                        |
+
+#### Phân tích theo layer (kết quả thực tế):
+
+| Layer           | Pass   | Fail  | Tỷ lệ     | Đạt ≥60%?     |
+| --------------- | ------ | ----- | --------- | ------------- |
+| normal          | 10     | 0     | 100%      | ✅            |
+| source_of_truth | 3      | 0     | 100%      | ✅            |
+| ambiguous_input | 3      | 0     | 100%      | ✅            |
+| out_of_scope    | 3      | 0     | 100%      | ✅            |
+| domain_specific | 3      | 0     | 100%      | ✅            |
+| edge            | 0      | 2     | 0%        | ❌            |
+| **Tổng**        | **22** | **2** | **91.7%** | ✅ (tổng đạt) |
+
+---
+
+## 7.5 Phân Tích Case Fail (Kết Quả Live Eval)
+
+| Case ID | Layer | Lỗi gặp phải                                                                                                 | Nguyên nhân                                                                              | Prompt cần sửa                                                                                                                    |
+| ------- | ----- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **C23** | edge  | Agent khen learner giải thích tốt và hỏi sâu hơn — **không phát hiện đây là copy-paste verbatim từ T04-054** | System prompt thiếu rule detect copy-paste verbatim từ transcript cụ thể                 | Thêm rule: "Nếu câu trả lời dài, chính xác từng chữ và nghe như sách giáo khoa, hỏi learner giải thích bằng ví dụ của chính mình" |
+| **C24** | edge  | Agent mời learner "cứ bắt đầu nhé" — **không hỏi ngược về câu 'Ok.' một từ**                                 | Agent interpret "Ok." như là sẵn sàng bắt đầu, không như câu trả lời cụt cần elaboration | Thêm rule: "Nếu input chỉ là 1-2 từ không có nội dung (Ok/Được/Ừ), phải hỏi ngược cụ thể bạn vừa học phần nào rồi?"               |
+
+---
+
+## 7.6 Điểm Mạnh Đã Chứng Minh
+
+Dựa trên baseline simulated và cấu trúc hệ thống:
+
+1. **Có lệnh gọi AI thật** ✅: Script `eval/run_eval.py` gọi `gemini-2.5-flash` qua `google.genai` SDK
+2. **Golden set từ data thật** ✅: 12/24 case phát triển từ chatlog `tutor_turns.csv` (K4, D01)
+3. **Citations có thể kiểm chứng** ✅: 100% case có mã đoạn `[T04-NNN]`/`[T06-NNN]` dẫn về transcript gốc
+4. **Coverage đủ 4 lớp khó** ✅: source_of_truth, ambiguous_input, out_of_scope, domain_specific
+5. **Rubric ≥20 case** ✅: 24 case (vượt 4 case)
+
+---
+
+## 7.7 Cách Chạy Evaluation (Hướng Dẫn Nhanh)
+
+```bash
+# Bước 1: Đảm bảo .env có GEMINI_API_KEY
+# File: c:\Users\anhho\OneDrive\Desktop\VinAI\K4-3B-E403-ThieuNu\.env
+
+# Bước 2: Chạy eval
+python eval/run_eval.py
+
+# Bước 3: Xem kết quả
+# File xuất: eval/eval-run-real.md
+
+# Bước 4: Chấm pass/fail
+# Mở eval/eval-run-real.md, đối chiếu với pass_criteria trong eval/golden-set.csv
+# Ghi kết quả vào Bảng 7.4 và 7.5 ở trên
+```
+
+---
+
+## 7.8 Tài Liệu Liên Quan
+
+| File                         | Nội dung                                    |
+| ---------------------------- | ------------------------------------------- |
+| `eval/golden-set.csv`        | 24 test cases với citations transcript      |
+| `eval/quality-dimensions.md` | Định nghĩa D1/D2/D3 + ví dụ pass/fail + IRR |
+| `eval/user-input-grid.md`    | Ma trận 5 chiều coverage + gap analysis     |
+| `eval/eval-run-template.md`  | Template cho các lượt chạy tiếp theo        |
+| `eval/eval-run-01.md`        | Lượt chạy baseline simulated                |
+| `eval/eval-run-real.md`      | Lượt chạy live AI (script tự sinh)          |
+| `eval/run_eval.py`           | Script chạy eval tự động qua Gemini API     |
+| `eval/README.md`             | Tổng quan thư mục eval                      |
+
+---
+
+> **Ghi chú**: Sau khi điền đầy đủ kết quả Live Eval vào mục 7.4 và 7.5, copy nội dung §7 này vào `spec.md`. Số liệu Pass/Fail thực tế sẽ làm bằng chứng cho CP3 và CP4.
