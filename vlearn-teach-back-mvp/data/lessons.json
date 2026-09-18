@@ -1,0 +1,127 @@
+{
+  "lessons": [
+    {
+      "id": "rest-api-http-methods",
+      "title": "REST API & HTTP Methods",
+      "summary": "Bài học giới thiệu về REST API, một kiến trúc phổ biến trong thiết kế web service. Bạn sẽ học về các HTTP methods, status codes và nguyên tắc stateless.",
+      "chunks": [
+        {
+          "id": "rest-api",
+          "title": "REST API",
+          "description": "Giới thiệu tổng quan về kiến trúc REST API và các đặc điểm chính.",
+          "key_points": [
+            "REST is an architectural style",
+            "Resources are identified by URLs",
+            "Communication uses HTTP",
+            "Representations are exchanged"
+          ],
+          "content": "REST (Representational State Transfer) là một kiến trúc được Roy Fielding giới thiệu năm 2000. REST API sử dụng giao thức HTTP để giao tiếp giữa client và server.",
+          "key_concepts": ["REST", "API", "Roy Fielding", "HTTP"]
+        },
+        {
+          "id": "client-server",
+          "title": "Client – Server",
+          "description": "Mô hình Client - Server tách biệt trong kiến trúc REST.",
+          "key_points": [
+            "Client và Server là hai thực thể độc lập",
+            "Client chủ động gửi Request, Server xử lý và trả Response",
+            "Server không tự động gửi dữ liệu cho client khi không có request"
+          ],
+          "content": "Trong mô hình REST, client và server là hai thực thể tách biệt. Client gửi request, server xử lý và trả response.",
+          "key_concepts": ["Client", "Server", "Request", "Response"]
+        },
+        {
+          "id": "http-methods",
+          "title": "HTTP Methods",
+          "description": "Các phương thức HTTP phổ biến trong REST: GET, POST, PUT, DELETE, PATCH.",
+          "key_points": [
+            "GET dùng để lấy dữ liệu",
+            "POST dùng để tạo mới resource",
+            "PUT dùng để cập nhật toàn bộ resource",
+            "PATCH dùng để cập nhật một phần",
+            "DELETE dùng để xóa resource"
+          ],
+          "content": "GET dùng để lấy dữ liệu, POST để tạo mới, PUT để cập nhật toàn bộ, PATCH để cập nhật một phần, DELETE để xóa.",
+          "key_concepts": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        {
+          "id": "http-status-codes",
+          "title": "HTTP Status Codes",
+          "description": "Ý nghĩa các nhóm mã trạng thái phản hồi từ server.",
+          "key_points": [
+            "2xx: Thành công (vd 200 OK, 201 Created)",
+            "3xx: Chuyển hướng (Redirection)",
+            "4xx: Lỗi do phía Client (vd 400 Bad Request, 404 Not Found)",
+            "5xx: Lỗi do phía Server (vd 500 Internal Server Error)"
+          ],
+          "content": "2xx là thành công, 3xx là redirect, 4xx là lỗi client, 5xx là lỗi server.",
+          "key_concepts": [
+            "Status Code",
+            "2xx",
+            "3xx",
+            "4xx",
+            "5xx",
+            "404 Not Found"
+          ]
+        },
+        {
+          "id": "stateless",
+          "title": "Stateless",
+          "description": "Nguyên tắc phi trạng thái (Stateless) trong REST.",
+          "key_points": [
+            "Mỗi request phải chứa đầy đủ thông tin để server xử lý",
+            "Server không lưu trạng thái (session/context) của client giữa các request",
+            "Giúp hệ thống dễ dàng mở rộng theo chiều ngang (scale horizontal)"
+          ],
+          "content": "Mỗi request đều độc lập, server không lưu trạng thái của client giữa các request. Server chỉ xử lý dựa trên dữ liệu gửi kèm trong request đó.",
+          "key_concepts": [
+            "Stateless",
+            "Phi trạng thái",
+            "Scalability",
+            "Session"
+          ]
+        }
+      ]
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "quiz-rest-api",
+      "lesson_id": "rest-api-http-methods",
+      "title": "Kiểm tra kiến thức REST API",
+      "questions": [
+        {
+          "id": "q1",
+          "prompt": "HTTP method nào dùng để tạo mới một resource?",
+          "options": ["GET", "POST", "PUT", "DELETE"],
+          "correct_index": 1,
+          "explanation": "POST dùng để tạo mới resource trên server."
+        },
+        {
+          "id": "q2",
+          "prompt": "Mã trạng thái 404 Not Found thuộc nhóm lỗi nào?",
+          "options": [
+            "Thành công",
+            "Chuyển hướng",
+            "Lỗi phía Client",
+            "Lỗi phía Server"
+          ],
+          "correct_index": 2,
+          "explanation": "Nhóm 4xx là các lỗi phát sinh do phía Client gửi yêu cầu không hợp lệ hoặc tài nguyên không tồn tại."
+        },
+        {
+          "id": "q3",
+          "prompt": "Nguyên tắc Stateless trong REST có nghĩa là gì?",
+          "options": [
+            "Server lưu lại toàn bộ lịch sử các request của client",
+            "Mỗi request độc lập, server không lưu trạng thái client giữa các lần gọi",
+            "Client không được phép gửi token xác thực",
+            "Server phải dùng database SQL"
+          ],
+          "correct_index": 1,
+          "explanation": "Stateless nghĩa là mỗi request chứa đủ thông tin để server xử lý độc lập."
+        }
+      ]
+    }
+  ]
+}

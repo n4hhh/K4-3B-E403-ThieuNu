@@ -4,5 +4,6 @@ __pycache__/
 node_modules/
 
 .venv/
-data/
+/data/
 .agents/
+rag_handoff/    
