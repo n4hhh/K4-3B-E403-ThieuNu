@@ -2,8 +2,8 @@
 
 - **Mốc sự kiện**: Phục vụ nghiệm thu **Checkpoint 3 (16:00 18/9)**
 - **Ngày giờ chạy**: 2026-09-18 13:15
-- **Người thực hiện đánh giá**: [Tên C] (Phụ trách Eval & Quality Bar)
-- **Phiên bản Prompt / Model**: Baseline System Prompt v1.0 — Mô hình: Gemini 1.5 Flash / Claude 3.5 Sonnet
+- **Người thực hiện đánh giá**: Nguyễn Anh Hoàng
+- **Phiên bản Prompt / Model**: Baseline System Prompt v1.0 — Mô hình: Gemini 3.5 Flash
 - **Dữ liệu nguồn đối chiếu**: `rag_handoff/sources/transcripts/` (`transcript-04-clean.md` & `transcript-06-clean.md`)
 
 ---

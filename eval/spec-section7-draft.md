@@ -1,6 +1,6 @@
 # §7. Kiểm thử — Draft cho spec.md
 
-> **Người phụ trách:** [Tên C]
+> **Người phụ trách:** Nguyễn Anh Hoàng
 > **File này là bản chốt hoàn thiện — copy nội dung vào `spec.md` mục §7 trước Checkpoint 4 (21:00 18/9).**
 > **Cơ sở dữ liệu đối chiếu**: Bài giảng Foundation (Transformer, Attention & LLM) trích từ `rag_handoff` (`transcript-04-clean.md` & `transcript-06-clean.md`).
 
